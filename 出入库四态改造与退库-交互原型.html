@@ -544,7 +544,7 @@ function rowBtns(order, type){
       btns.push(B('生成退库单','info',`genReturnFromInbound`, 'warehouse:inboundOrder:return'));
     } else { btns.push(B('详情','',`openInboundEdit`, 'warehouse:inboundOrder:query'));
     }
-    btns.push(B('打印','info',`printInbound`, 'warehouse:inboundOrder:print'));
+    btns.push(B('打印入库单','info',`printInbound`, 'warehouse:inboundOrder:print'));
   } else if(type==='outbound'){
     if(s==='0'){ btns.push(B('编辑','',`openOutboundEdit`, 'warehouse:outStoreOrder:edit'));
       btns.push(B('生效','success',`actOutboundAudit`, 'warehouse:outStoreOrder:audit'));
@@ -557,7 +557,7 @@ function rowBtns(order, type){
       btns.push(B('生成退库单','info',`genReturnFromOutbound`, 'warehouse:outStoreOrder:return'));
     } else { btns.push(B('详情','',`openOutboundEdit`, 'warehouse:outStoreOrder:query'));
     }
-    btns.push(B('打印','info',`printOutbound`, 'warehouse:outStoreOrder:print'));
+    btns.push(B('打印出库单','info',`printOutbound`, 'warehouse:outStoreOrder:print'));
   }
   return `<div class="actions">${btns.join('')}</div>`;
 }
@@ -620,7 +620,7 @@ function returnRowBtns(o){
   if(s==='0'){ btns.push(B('编辑','',`openReturnEdit`)); btns.push(B('生效','success',`actReturnAudit`)); btns.push(B('删除','danger',`delReturn`)); }
   else if(s==='1'){ btns.push(B('详情','',`openReturnEdit`)); btns.push(B('反生效','warning',`actReturnUnAudit`)); btns.push(B('执行退库','success',`actReturnConfirm`)); btns.push(B('作废','danger',`actReturnVoid`)); }
   else if(s==='2'){ btns.push(B('详情','',`openReturnEdit`)); }
-  btns.push(B('打印','info',`printReturn`));
+  btns.push(B('打印退库单','info',`printReturn`));
   return `<div class="actions">${btns.join('')}</div>`;
 }
 function printReturn(id){ const o=findR(id); toast('打印退库单：'+o.no,'warning'); }
@@ -686,7 +686,7 @@ function renderInboundEdit(id){
     bts.push(`<button class="btn btn-success" onclick="actInboundStore('${o.id}')">⬇ 入库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
   } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromInbound('${o.id}')">↩ 生成退库单</button>`);
-    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印入库单')">🖨 打印</button>`);
+    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印入库单')">🖨 打印入库单</button>`);
   }
   document.getElementById('inboundEditBtns').innerHTML = bts.join('');
 }
@@ -729,7 +729,7 @@ function renderOutboundEdit(id){
     bts.push(`<button class="btn btn-success" onclick="actOutboundConfirm('${o.id}')">⬆ 出库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
   } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromOutbound('${o.id}')">↩ 生成退库单</button>`); }
-  if(s==='1'||s==='2') bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印出库单')">🖨 打印</button>`);
+  if(s==='1'||s==='2') bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印出库单')">🖨 打印出库单</button>`);
   document.getElementById('outboundEditBtns').innerHTML = bts.join('');
 }
 
@@ -744,8 +744,8 @@ function renderReturnEditBtns(o){
   } else if(o.status==='1'){ bts.push(`<button class="btn btn-warning" onclick="actReturnUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actReturnConfirm('${o.id}')">↩ 执行退库</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actReturnVoid('${o.id}')">作废</button>`);
-    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印</button>`);
-  } else if(o.status==='2'){ bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印</button>`); }
+    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印退库单</button>`);
+  } else if(o.status==='2'){ bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印退库单</button>`); }
   document.getElementById('returnEditBtns').innerHTML = bts.join('');
 }
 function openReturnAdd(presetRefType, presetRefId){
