@@ -676,12 +676,12 @@ let inboundOrders = [
   { id:'IB006', no:'RK20260801006', externalCode:'EXT-88006', supplier:'东莞精密元件', purchaseNo:'CG2026072035', operator:'李制单', warehousingTime:'', status:'9', remark:'制单错误作废' },
 ];
 let outboundOrders = [
-  { id:'OB001', no:'CK20260810001', planNo:'PH2026073001', externalCode:'EXTO-7001', type:'销售出库', status:'0', outTime:'', remark:'待制单' },
-  { id:'OB002', no:'CK20260810002', planNo:'PH2026073002', externalCode:'EXTO-7002', type:'生产领料', status:'0', outTime:'', remark:'' },
-  { id:'OB003', no:'CK20260810003', planNo:'PH2026073005', externalCode:'EXTO-7003', type:'销售出库', status:'1', outTime:'', remark:'已生效待出库' },
-  { id:'OB004', no:'CK20260810004', planNo:'PH2026073006', externalCode:'EXTO-7004', type:'生产领料', status:'1', outTime:'', remark:'已生效待出库' },
-  { id:'OB005', no:'CK20260810005', planNo:'PH2026073009', externalCode:'EXTO-7005', type:'销售出库', status:'2', outTime:'2026-08-25 16:40', remark:'已完成' },
-  { id:'OB006', no:'CK20260810006', planNo:'PH2026073010', externalCode:'EXTO-7006', type:'生产领料', status:'9', outTime:'', remark:'已作废' },
+  { id:'OB001', no:'CK20260810001', planNo:'PH2026073001', externalCode:'EXTO-7001', type:'销售出库', status:'0', outTime:'', customer:'深圳市华科电子', contact:'陈工', phone:'13800138001', remark:'待制单' },
+  { id:'OB002', no:'CK20260810002', planNo:'PH2026073002', externalCode:'EXTO-7002', type:'生产领料', status:'0', outTime:'', customer:'生产部', contact:'李工', phone:'13900139002', remark:'' },
+  { id:'OB003', no:'CK20260810003', planNo:'PH2026073005', externalCode:'EXTO-7003', type:'销售出库', status:'1', outTime:'', customer:'东莞精密元件', contact:'王工', phone:'13700137003', remark:'已生效待出库' },
+  { id:'OB004', no:'CK20260810004', planNo:'PH2026073006', externalCode:'EXTO-7004', type:'生产领料', status:'1', outTime:'', customer:'生产部', contact:'赵工', phone:'13600136004', remark:'已生效待出库' },
+  { id:'OB005', no:'CK20260810005', planNo:'PH2026073009', externalCode:'EXTO-7005', type:'销售出库', status:'2', outTime:'2026-08-25 16:40', customer:'惠州精密制造', contact:'钱工', phone:'13500135005', remark:'已完成' },
+  { id:'OB006', no:'CK20260810006', planNo:'PH2026073010', externalCode:'EXTO-7006', type:'生产领料', status:'9', outTime:'', customer:'生产部', contact:'孙工', phone:'13400134006', remark:'已作废' },
 ];
 let returnOrders = [
   { id:'RT001', no:'TK20260815001', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'0', totalQty:0, remark:'错入多入', operator:'张仓管', returnTime:'', remarkNote:'待生效' },
@@ -993,16 +993,16 @@ function openOutboundEdit(id){ editingOutboundId=id; outboundEditDetails=(outbou
 function backOutbound(){ showSub('outbound','outbound-list'); renderOutboundList(); }
 function renderOutboundEdit(id){
   const isNew = !id;
-  const o = isNew? {id:'',no:'',planNo:'',externalCode:'',type:'销售出库',status:'0',outTime:'',customer:'',remark:''} : outboundOrders.find(x=>x.id===id);
+  const o = isNew? {id:'',no:'',planNo:'',externalCode:'',type:'销售出库',status:'0',outTime:'',customer:'',contact:'',phone:'',remark:''} : outboundOrders.find(x=>x.id===id);
   const s = o.status;
   const readonly = s==='1'||s==='2'||s==='9';
   document.getElementById('outboundEditStatus').innerHTML = `状态：${tag(s)}`;
   document.getElementById('outboundFormGrid').innerHTML = `
     <div class="form-item"><label>出库单号</label><input class="input" value="${o.no}" ${readonly?'disabled':''} placeholder="留空自动生成"></div>
     <div class="form-item"><label>类型</label><input class="input" value="${o.type}" ${readonly?'disabled':''}></div>
-    <div class="form-item"><label>生产工单</label><input class="input" value="${o.planNo}" ${readonly?'disabled':''}></div>
     <div class="form-item"><label>客户</label><input class="input" value="${o.customer||'—'}" ${readonly?'disabled':''}></div>
-    <div class="form-item"><label>物流方式</label><input class="input" value="物流" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>联系人</label><input class="input" value="${o.contact||'—'}" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>电话</label><input class="input" value="${o.phone||'—'}" ${readonly?'disabled':''}></div>
     <div class="form-item"><label>操作人</label><input class="input" value="张仓管" disabled></div>
     <div class="form-item" style="grid-column:span 2"><label>收货地址</label><input class="input" value="广东省深圳市宝安区科技园" ${readonly?'disabled':''}></div>
     <div class="form-item" style="grid-column:span 2"><label>备注</label><input class="input" value="${o.remark}" ${readonly?'disabled':''}></div>`;
