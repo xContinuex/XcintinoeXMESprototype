@@ -440,7 +440,7 @@
               <table class="table">
                 <thead><tr>
                   <th>批次号</th><th>物料编号</th><th>物料名称</th><th class="num">原单数量</th><th class="num">已退数量</th>
-                  <th class="num">可退数量</th><th class="num" id="returnQtyHead">本次退库数量</th><th>退库原因</th>
+                  <th class="num">可退数量</th><th class="num" id="returnQtyHead">本次退库数量</th><th>备注</th>
                 </tr></thead>
                 <tbody id="returnDetailBody"></tbody>
               </table>
@@ -1051,8 +1051,8 @@ function loadReturnDetail(refId, preset){
     return `<tr>
       <td>${d.batch||'—'}</td><td>${d.matCode}</td><td>${d.matName}</td>
       <td class="num">${d.qty}</td><td class="num">${d.returned||0}</td><td class="num" style="color:var(--primary);font-weight:600">${avail}</td>
-      <td class="num"><input class="input" style="width:90px;text-align:right" type="number" min="0" max="${avail}" value="${Math.min(avail, d.qty||0)}"></td>
-      <td><select class="select" style="width:130px">${REASONS.map(r=>`<option ${r==='品质不良'?'selected':''}>${r}</option>`).join('')}</select></td>
+      <td class="num"><input class="input" style="width:90px;text-align:right" type="number" min="0" max="${avail}" value="0"></td>
+      <td><input class="input" style="width:130px" placeholder="请输入备注"></td>
     </tr>`;
   }).join('');
 }
