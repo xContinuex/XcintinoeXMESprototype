@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>出入库单四态改造与退库 · 交互原型</title>
+<!-- Tailwind CSS CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+  :root {
+    --primary: #409eff;
+    --primary-light: #66b1ff;
+    --primary-bg: #ecf5ff;
+    --success: #67c23a;
+    --success-bg: #f0f9eb;
+    --warning: #e6a23c;
+    --warning-bg: #fdf6ec;
+    --danger: #f56c6c;
+    --danger-bg: #fef0f0;
+    --info: #909399;
+    --info-bg: #f4f4f5;
+    --main-text: #303133;
+    --regular-text: #606266;
+    --secondary-text: #909399;
+    --border: #e4e7ed;
+    --border-light: #ebeef5;
+    --bg-page: #f0f2f5;
+    --sidebar-bg: #304156;
+    --sidebar-active: #263445;
+    --sidebar-submenu: #001529;
+    --blue-dark: #2b7cd3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    color: var(--main-text);
+    font-size: 14px;
+    background: var(--bg-page);
+  }
+  /* ===== Layout ===== */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar {
+    width: 210px; background: var(--sidebar-bg); color: #bfcbd9;
+    display: flex; flex-direction: column; flex-shrink: 0;
+    transition: width .25s;
+  }
+  .logo {
+    height: 50px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 600; font-size: 16px; letter-spacing: 1px;
+    background: #2b3a4b; border-bottom: 1px solid #24313f;
+  }
+  .menu-title {
+    padding: 10px 20px 6px; font-size: 12px; color: #8a98ab;
+  }
+  .menu-item {
+    padding: 12px 20px; cursor: pointer; font-size: 14px; color: #bfcbd9;
+    display: flex; align-items: center; gap: 10px; transition: all .2s;
+    border-left: 3px solid transparent; user-select: none;
+  }
+  .menu-item:hover { background: var(--sidebar-active); color: #fff; }
+  .menu-item.active {
+    background: var(--sidebar-active); color: #fff; border-left-color: var(--primary);
+  }
+  .menu-item .icon { width: 18px; text-align: center; }
+  .sidebar .foot { margin-top: auto; padding: 14px 20px; font-size: 12px; color: #7a8899; border-top: 1px solid #24313f; }
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .navbar {
+    height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08);
+    display: flex; align-items: center; padding: 0 20px; gap: 10px; flex-shrink: 0; z-index: 10;
+  }
+  .breadcrumb { color: #909399; font-size: 14px; }
+  .breadcrumb b { color: #303133; font-weight: 600; }
+  .navbar .spacer { flex: 1; }
+  .nav-tip { font-size: 12px; color: var(--secondary-text); background: var(--primary-bg); padding: 4px 10px; border-radius: 4px; }
+  .content { flex: 1; overflow: auto; padding: 16px; }
+  /* ===== Cards ===== */
+  .card {
+    background: #fff; border-radius: 6px; border: 1px solid var(--border-light);
+    box-shadow: 0 1px 2px rgba(0,0,0,.05); margin-bottom: 16px;
+  }
+  .card-head { padding: 14px 16px; border-bottom: 1px solid var(--border-light); font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .card-head .sub { font-weight: 400; font-size: 12px; color: var(--secondary-text); }
+  .card-body { padding: 16px; }
+  /* ===== Toolbar ===== */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .toolbar .field { display: flex; align-items: center; gap: 6px; }
+  .toolbar .field label { color: var(--regular-text); white-space: nowrap; }
+  /* ===== Buttons ===== */
+  .btn {
+    display: inline-flex; align-items: center; gap: 4px; padding: 7px 14px;
+    border: 1px solid transparent; border-radius: 4px; font-size: 13px; cursor: pointer;
+    transition: all .2s; user-select: none; white-space: nowrap; line-height: 1.2;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-light); }
+  .btn-plain { background: #fff; border-color: #dcdfe6; color: var(--regular-text); }
+  .btn-plain:hover { color: var(--primary); border-color: var(--primary); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { filter: brightness(1.08); }
+  .btn-warning { background: #fff; border-color: var(--warning); color: var(--warning); }
+  .btn-warning:hover { background: var(--warning-bg); }
+  .btn-danger { background: #fff; border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger-bg); }
+  .btn-info { background: #fff; border-color: #dcdfe6; color: var(--info); }
+  .btn-info:hover { color: var(--primary); border-color: var(--primary); }
+  .btn-link { background: none; border: none; color: var(--primary); padding: 4px 8px; font-size: 13px; cursor: pointer; }
+  .btn-link:hover { text-decoration: underline; }
+  .btn-link.danger { color: var(--danger); }
+  .btn-link.success { color: var(--success); }
+  .btn-link.warning { color: var(--warning); }
+  .btn-link.info { color: var(--info); }
+  .btn-sm { padding: 3px 10px; font-size: 12px; }
+  .btn-lg { padding: 10px 22px; font-size: 14px; }
+  /* ===== Tags ===== */
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; line-height: 1.6; border: 1px solid transparent;
+  }
+  .tag-draft   { color: var(--info);    background: var(--info-bg);    border-color: #e9e9eb; }
+  .tag-active  { color: var(--success); background: var(--success-bg); border-color: #c2e7b0; }
+  .tag-done    { color: var(--primary); background: var(--primary-bg); border-color: #b3d8ff; }
+  .tag-void    { color: var(--danger);  background: var(--danger-bg);  border-color: #fbc4c4; }
+
+  /* ===== Table ===== */
+  .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table thead th {
+    background: #f5f7fa; color: #909399; font-weight: 500; text-align: left;
+    padding: 10px 12px; border-bottom: 1px solid var(--border-light); white-space: nowrap;
+  }
+  .table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); color: var(--regular-text); }
+  .table tbody tr { transition: background .15s; }
+  .table tbody tr:hover { background: #f5f7fa; }
+  .table tbody tr.no-data td { text-align: center; color: var(--secondary-text); padding: 40px 0; }
+  .actions { display: flex; gap: 2px; flex-wrap: wrap; }
+  /* ===== Form ===== */
+  .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 20px; }
+  .form-item { display: flex; align-items: center; }
+  .form-item label { width: 84px; color: var(--regular-text); flex-shrink: 0; text-align: right; padding-right: 10px; }
+  .form-item label.req::before { content: "*"; color: var(--danger); margin-right: 4px; }
+  .input, .select, .textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid #dcdfe6; border-radius: 4px;
+    font-size: 13px; color: var(--main-text); outline: none; transition: border-color .2s; background: #fff;
+  }
+  .input:focus, .select:focus, .textarea:focus { border-color: var(--primary); }
+  .input:disabled, .select:disabled, .textarea:disabled { background: #f5f7fa; color: #a8abb2; cursor: not-allowed; }
+  .textarea { resize: vertical; }
+  .form-actions { display: flex; justify-content: space-between; align-items: center; padding: 0 0 16px; }
+  /* ===== State machine legend ===== */
+  .flow {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 16px;
+  }
+  .flow .step {
+    display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px;
+    background: #f0f2f5; font-size: 13px; border: 1px solid var(--border-light);
+  }
+  .flow .arrow { color: #c0c4cc; font-size: 18px; }
+  .flow .note { font-size: 12px; color: var(--secondary-text); }
+  .perm-tag { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: #b45309; background: #fef3c7; padding: 1px 6px; border-radius: 3px; margin-right: 4px; }
+  .badge { font-size: 12px; color: #fff; border-radius: 10px; padding: 1px 8px; }
+  .badge.blue { background: var(--primary); }
+  .badge.red { background: var(--danger); }
+  .count-pill { display:inline-block; min-width: 18px; text-align:center; background:#303a4a; color:#c8d2e0; border-radius: 9px; font-size: 11px; padding: 1px 6px; margin-left: auto; }
+  .submenu { background: var(--sidebar-submenu); }
+  .submenu .menu-item { padding-left: 40px; font-size: 13px; }
+  .divider { border-top: 1px dashed var(--border-light); margin: 14px 0; }
+  .row-sum { font-weight: 600; color: var(--main-text); }
+  .hint { font-size: 12px; color: var(--secondary-text); }
+  .loading-bar { height: 3px; background: linear-gradient(90deg,var(--primary),var(--primary-light)); animation: load 1s linear infinite; }
+  @keyframes load { 0%{width:0} 50%{width:60%} 100%{width:100%} }
+  .fade { animation: fade .2s ease; }
+  @keyframes fade { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+  /* Toast */
+  .toast-wrap { position: fixed; top: 60px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: #fff; border-left: 4px solid var(--primary); box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    padding: 10px 16px; border-radius: 4px; font-size: 13px; color: var(--main-text); min-width: 220px;
+    animation: slideIn .25s ease;
+  }
+  .toast.success { border-left-color: var(--success); }
+  .toast.warning { border-left-color: var(--warning); }
+  .toast.danger { border-left-color: var(--danger); }
+  @keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+  /* Modal */
+  .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; display: none; align-items: center; justify-content: center; }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 6px; width: 420px; max-width: 92vw; overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2); animation: fade .2s;
+  }
+  .modal-head { padding: 16px 18px; border-bottom: 1px solid var(--border-light); font-weight: 600; font-size: 15px; }
+  .modal-body { padding: 18px; color: var(--regular-text); font-size: 14px; }
+  .modal-foot { padding: 12px 18px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 10px; }
+  .muted { color: var(--secondary-text); }
+  .flex { display: flex; } .items-center { align-items: center; } .gap-8 { gap: 8px; } .gap-12 { gap: 12px; }
+  .mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; } .mt-16 { margin-top: 16px; } .mb-8{margin-bottom:8px;} .mb-12{margin-bottom:12px;}
+  .w-full { width: 100%; } .text-center{text-align:center;} .text-right{text-align:right;}
+  .view { display: none; }
+  .view.active { display: block; }
+  .sub-view { display: none; }
+  .sub-view.active { display: block; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .perm-note { font-size: 11px; color: #c0a06a; background: #fbf5e9; padding: 2px 6px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <div class="logo">📦 天利 MES · 仓储</div>
+    <div class="menu-title">出入库管理</div>
+    <div class="menu-item active" data-nav="inbound"><span class="icon">⬇</span> 入库单 <span class="count-pill" id="navCountInbound">0</span></div>
+    <div class="menu-item" data-nav="outbound"><span class="icon">⬆</span> 出库单 <span class="count-pill" id="navCountOutbound">0</span></div>
+    <div class="menu-item" data-nav="return"><span class="icon">↩</span> 退库单 <span class="count-pill" id="navCountReturn">0</span></div>
+    <div class="menu-title">状态说明</div>
+    <div class="menu-item active" data-nav="machine"><span class="icon">♻</span> 四态状态机</div>
+    <div class="foot">原型演示 · 数据为本地模拟</div>
+  </aside>
+
+  <!-- ===== 主区域 ===== -->
+  <div class="main">
+    <nav class="navbar">
+      <span class="breadcrumb">出入库管理 / <b id="crumb">四态状态机</b></span>
+      <span class="spacer"></span>
+      <span class="nav-tip">四态：草稿→已生效→已完成 · 已作废旁路 · 反生效回草稿</span>
+    </nav>
+
+    <div class="content">
+
+      <!-- ===== 状态机说明视图 ===== -->
+      <div class="view active" id="view-machine">
+        <div class="card">
+          <div class="card-head">统一四态状态机 <span class="sub">（入库单 / 出库单 / 退库单 统一）</span></div>
+          <div class="flow">
+            <div class="step"><span class="tag tag-draft">草稿 0</span></div>
+            <div class="arrow">➜</div>
+            <div class="step"><span class="tag tag-active">已生效 1</span></div>
+            <div class="arrow">➜</div>
+            <div class="step"><span class="tag tag-done">已完成 2</span></div>
+            <div class="arrow" style="transform:rotate(90deg)">⤹</div>
+            <div class="step"><span class="tag tag-void">已作废 9</span></div>
+          </div>
+          <div class="card-body">
+            <p class="hint" style="line-height:2">
+              · 操作名（对应权限标识）：<b>生效</b> <span class="perm-note">audit</span>、<b>反生效(弃审)</b> <span class="perm-note">unAudit</span>、<b>执行(入库/出库)</b> <span class="perm-note">store / confirm</span>、<b>作废</b> <span class="perm-note">void</span>、<b>生成退库单</b> <span class="perm-note">（已完成单据）</span><br>
+              · <b>草稿(0)</b> 可编辑/删除/保存；<b>已生效(1)</b> 锁定未执行，可反生效回草稿或作废；<b>已完成(2)</b> 终态，仅可生成退库单；<b>已作废(9)</b> 旁路终态。<br>
+              · 退库单无审批：草稿→生效→完成，作废旁路。
+            </p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">操作 × 状态矩阵</div>
+          <div class="card-body">
+            <table class="table">
+              <thead><tr><th>操作 \ 状态</th><th>草稿(0)</th><th>已生效(1)</th><th>已完成(2)</th><th>已作废(9)</th></tr></thead>
+              <tbody id="matrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 入库单视图 ===== -->
+      <div class="view" id="view-inbound">
+        <!-- 列表 -->
+        <div class="sub-view active" id="inbound-list">
+          <div class="card">
+            <div class="card-head">入库单列表 <span class="sub" id="inboundListTip"></span></div>
+            <div class="card-body">
+              <div class="toolbar mb-12">
+                <div class="field"><label>入库单号</label><input class="input" id="inboundQueryNo" style="width:170px" placeholder="请输入"></div>
+                <div class="field"><label>状态</label>
+                  <select class="select" id="inboundQueryStatus" style="width:130px">
+                    <option value="">全部</option>
+                    <option value="0">草稿</option><option value="1">已生效</option>
+                    <option value="2">已完成</option><option value="9">已作废</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary" onclick="queryInbound()">查询</button>
+                <button class="btn btn-plain" onclick="resetInboundQuery()">重置</button>
+                <span class="spacer" style="flex:1"></span>
+                <button class="btn btn-primary" onclick="openInboundAdd()">➕ 新增入库单</button>
+              </div>
+              <table class="table">
+                <thead><tr>
+                  <th>入库单号</th><th>外部编号</th><th>往来单位</th><th>关联单号</th><th>操作人</th><th>入库时间</th><th>状态</th><th>备注</th><th style="min-width:330px">操作</th>
+                </tr></thead>
+                <tbody id="inboundTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- 编辑/详情 -->
+        <div class="sub-view" id="inbound-edit">
+          <div class="card">
+            <div class="form-actions">
+              <button class="btn btn-plain" onclick="backInbound()">⬅ 返回列表</button>
+              <div class="flex gap-8" id="inboundEditBtns"></div>
+            </div>
+            <div class="card-head">入库单信息 <span class="sub" id="inboundEditStatus"></span></div>
+            <div class="card-body">
+              <div class="form-grid" id="inboundFormGrid"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">入库记录 <span class="sub">（明细）</span></div>
+            <div class="card-body">
+              <table class="table">
+                <thead><tr>
+                  <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th class="num">数量</th><th>单位</th>
+                  <th>检验结果</th><th>到货类型</th><th>仓库位置</th><th class="num">已退数量</th><th id="inboundDetailOpsHead"></th>
+                </tr></thead>
+                <tbody id="inboundDetailBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 出库单视图 ===== -->
+      <div class="view" id="view-outbound">
+        <div class="sub-view active" id="outbound-list">
+          <div class="card">
+            <div class="card-head">出库单列表</div>
+            <div class="card-body">
+              <div class="toolbar mb-12">
+                <div class="field"><label>出库单号</label><input class="input" id="outboundQueryNo" style="width:170px" placeholder="请输入"></div>
+                <div class="field"><label>状态</label>
+                  <select class="select" id="outboundQueryStatus" style="width:130px">
+                    <option value="">全部</option>
+                    <option value="0">草稿</option><option value="1">已生效</option>
+                    <option value="2">已完成</option><option value="9">已作废</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary" onclick="queryOutbound()">查询</button>
+                <button class="btn btn-plain" onclick="resetOutboundQuery()">重置</button>
+                <span class="spacer" style="flex:1"></span>
+                <button class="btn btn-primary" onclick="openOutboundAdd()">➕ 新增出库单</button>
+              </div>
+              <table class="table">
+                <thead><tr>
+                  <th>配货计划单号</th><th>出库单号</th><th>外部编号</th><th>类型</th><th>状态</th>
+                  <th>出库时间</th><th>备注</th><th style="min-width:340px">操作</th>
+                </tr></thead>
+                <tbody id="outboundTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="sub-view" id="outbound-edit">
+          <div class="card">
+            <div class="form-actions">
+              <button class="btn btn-plain" onclick="backOutbound()">⬅ 返回列表</button>
+              <div class="flex gap-8" id="outboundEditBtns"></div>
+            </div>
+            <div class="card-head">出库单信息 <span class="sub" id="outboundEditStatus"></span></div>
+            <div class="card-body">
+              <div class="form-grid" id="outboundFormGrid"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">出库明细</div>
+            <div class="card-body">
+              <table class="table">
+                <thead><tr>
+                  <th>物料编号</th><th>物料名称</th><th>规格</th><th class="num">数量</th><th>单位</th>
+                  <th>仓库位置</th><th class="num">已退数量</th><th id="outboundDetailOpsHead"></th>
+                </tr></thead>
+                <tbody id="outboundDetailBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 退库单视图 ===== -->
+      <div class="view" id="view-return">
+        <div class="sub-view active" id="return-list">
+          <div class="card">
+            <div class="card-head">退库单列表 <span class="sub">（关联原单反向冲销 · 无审批）</span></div>
+            <div class="card-body">
+              <div class="toolbar mb-12">
+                <div class="field"><label>退库单号</label><input class="input" id="returnQueryNo" style="width:170px" placeholder="请输入"></div>
+                <div class="field"><label>状态</label>
+                  <select class="select" id="returnQueryStatus" style="width:130px">
+                    <option value="">全部</option>
+                    <option value="0">草稿</option><option value="1">已生效</option>
+                    <option value="2">已完成</option><option value="9">已作废</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary" onclick="queryReturn()">查询</button>
+                <button class="btn btn-plain" onclick="resetReturnQuery()">重置</button>
+                <span class="spacer" style="flex:1"></span>
+                <button class="btn btn-primary" onclick="openReturnAdd()">➕ 新增退库单</button>
+              </div>
+              <table class="table">
+                <thead><tr>
+                  <th>退库单号</th><th>来源类型</th><th>原单据号</th><th>状态</th><th class="num">退库数量</th>
+                  <th>退库原因</th><th>操作人</th><th>退库完成时间</th><th style="min-width:300px">操作</th>
+                </tr></thead>
+                <tbody id="returnTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- 新增/编辑退库 -->
+        <div class="sub-view" id="return-edit">
+          <div class="card">
+            <div class="form-actions">
+              <button class="btn btn-plain" onclick="backReturn()">⬅ 返回列表</button>
+              <div class="flex gap-8" id="returnEditBtns"></div>
+            </div>
+            <div class="card-head" id="returnEditTitle">新增退库单</div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-item"><label class="req">来源类型</label>
+                  <select class="select" id="returnRefType" onchange="onReturnRefTypeChange()">
+                    <option value="1">入库退库（冲销入库）</option>
+                    <option value="2">出库退库（货物退回仓库）</option>
+                  </select>
+                </div>
+                <div class="form-item"><label class="req">选择原单</label>
+                  <select class="select" id="returnRefOrder" onchange="onReturnRefOrderChange()"></select>
+                </div>
+                <div class="form-item"><label>操作人</label><input class="input" id="returnOperator" disabled value="张仓管"></div>
+                <div class="form-item" style="grid-column: span 4"><label>备注</label><input class="input" id="returnRemark" placeholder="请输入备注"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">退库明细 <span class="sub" id="returnDetailTip"></span></div>
+            <div class="card-body">
+              <table class="table">
+                <thead><tr>
+                  <th>批次号</th><th>物料编号</th><th>物料名称</th><th class="num">原单数量</th><th class="num">已退数量</th>
+                  <th class="num">可退数量</th><th class="num" id="returnQtyHead">本次退库数量</th><th>退库原因</th>
+                </tr></thead>
+                <tbody id="returnDetailBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 确认弹窗 -->
+<div class="modal-mask" id="confirmMask">
+  <div class="modal">
+    <div class="modal-head" id="confirmTitle">操作确认</div>
+    <div class="modal-body" id="confirmMsg">是否确认操作？</div>
+    <div class="modal-foot">
+      <button class="btn btn-plain" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary" id="confirmOkBtn" onclick="confirmOk()">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* =========================================================
+ * 四态：0草稿 1已生效 2已完成 9已作废
+ * 权限标识参考技术方案 §6.1
+ * ========================================================= */
+const STATUS = { 0:'草稿', 1:'已生效', 2:'已完成', 9:'已作废' };
+const STATUS_TAG = { 0:'tag-draft', 1:'tag-active', 2:'tag-done', 9:'tag-void' };
+const REASONS = ['错入多入','品质不良','生产退料','客户退货','其他'];
+
+// mock 数据
+let inboundOrders = [
+  { id:'IB001', no:'RK20260801001', externalCode:'EXT-88001', supplier:'深圳市华科电子', purchaseNo:'CG2026072003', operator:'李制单', warehousingTime:'', status:'0', remark:'待制单' },
+  { id:'IB002', no:'RK20260801002', externalCode:'EXT-88002', supplier:'东莞精密元件', purchaseNo:'CG2026072008', operator:'李制单', warehousingTime:'', status:'0', remark:'物料已就绪' },
+  { id:'IB003', no:'RK20260801003', externalCode:'EXT-88003', supplier:'苏州微电子', purchaseNo:'CG2026072012', operator:'张仓管', warehousingTime:'', status:'1', remark:'已锁定未入库' },
+  { id:'IB004', no:'RK20260801004', externalCode:'EXT-88004', supplier:'深圳市华科电子', purchaseNo:'CG2026072021', operator:'张仓管', warehousingTime:'', status:'1', remark:'等待过账' },
+  { id:'IB005', no:'RK20260801005', externalCode:'EXT-88005', supplier:'惠州精密制造', purchaseNo:'CG2026072030', operator:'王主管', warehousingTime:'2026-08-20 14:32', status:'2', remark:'已过账完成' },
+  { id:'IB006', no:'RK20260801006', externalCode:'EXT-88006', supplier:'东莞精密元件', purchaseNo:'CG2026072035', operator:'李制单', warehousingTime:'', status:'9', remark:'制单错误作废' },
+];
+let outboundOrders = [
+  { id:'OB001', no:'CK20260810001', planNo:'PH2026073001', externalCode:'EXTO-7001', type:'销售出库', status:'0', outTime:'', remark:'待制单' },
+  { id:'OB002', no:'CK20260810002', planNo:'PH2026073002', externalCode:'EXTO-7002', type:'生产领料', status:'0', outTime:'', remark:'' },
+  { id:'OB003', no:'CK20260810003', planNo:'PH2026073005', externalCode:'EXTO-7003', type:'销售出库', status:'1', outTime:'', remark:'已生效待出库' },
+  { id:'OB004', no:'CK20260810004', planNo:'PH2026073006', externalCode:'EXTO-7004', type:'生产领料', status:'1', outTime:'', remark:'已生效待出库' },
+  { id:'OB005', no:'CK20260810005', planNo:'PH2026073009', externalCode:'EXTO-7005', type:'销售出库', status:'2', outTime:'2026-08-25 16:40', remark:'已完成' },
+  { id:'OB006', no:'CK20260810006', planNo:'PH2026073010', externalCode:'EXTO-7006', type:'生产领料', status:'9', outTime:'', remark:'已作废' },
+];
+let returnOrders = [
+  { id:'RT001', no:'TK20260815001', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'0', totalQty:0, reason:'错入多入', operator:'张仓管', returnTime:'', remark:'待生效' },
+  { id:'RT002', no:'TK20260815002', refType:'2', refNo:'CK20260810005', refId:'OB005', status:'1', totalQty:0, reason:'品质不良', operator:'张仓管', returnTime:'', remark:'已生效待执行' },
+  { id:'RT003', no:'TK20260815003', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'2', totalQty:50, reason:'客户退货', operator:'王主管', returnTime:'2026-08-22 09:18', remark:'已完成' },
+];
+
+// 明细
+let inboundDetails = {
+  IB001:[{batch:'P240711-001',matCode:'M1001',matName:'贴片电阻',spec:'0603-10KΩ',qty:5000,unit:'pcs',inspect:'合格',arrival:'采购到货',loc:'成品仓/A区/货架1/库位01',returned:0}],
+  IB002:[{batch:'P240712-008',matCode:'M1002',matName:'贴片电容',spec:'0805-100nF',qty:3000,unit:'pcs',inspect:'合格',arrival:'采购到货',loc:'原料仓/B区/货架2/库位05',returned:0}],
+  IB003:[{batch:'P240713-021',matCode:'M1003',matName:'连接器',spec:'PH2.0-4P',qty:1200,unit:'pcs',inspect:'合格',arrival:'换货到货',loc:'原料仓/A区/货架3/库位08',returned:0}],
+  IB004:[{batch:'P240714-015',matCode:'M1004',matName:'晶振',spec:'32.768KHz',qty:800,unit:'pcs',inspect:'合格',arrival:'采购到货',loc:'成品仓/B区/货架1/库位12',returned:0}],
+  IB005:[{batch:'P240715-033',matCode:'M1005',matName:'钽电容',spec:'C型-47uF',qty:2000,unit:'pcs',inspect:'合格',arrival:'采购到货',loc:'原料仓/A区/货架5/库位02',returned:50}],
+  IB006:[{batch:'P240716-010',matCode:'M1006',matName:'二极管',spec:'SOD-123',qty:1500,unit:'pcs',inspect:'合格',arrival:'采购到货',loc:'',returned:0}],
+};
+let outboundDetails = {
+  OB001:[{matCode:'M2001',matName:'PCB主板',spec:'TL-MB-01',qty:100,unit:'块',loc:'成品仓/A区/货架2/库位03',returned:0}],
+  OB002:[{matCode:'M2002',matName:'散热片',spec:'AL-40mm',qty:300,unit:'个',loc:'原料仓/B区/货架4/库位01',returned:0}],
+  OB003:[{matCode:'M2003',matName:'外壳',spec:'ABS-白色',qty:200,unit:'个',loc:'成品仓/A区/货架1/库位06',returned:0}],
+  OB004:[{matCode:'M2004',matName:'排线',spec:'FPC-12P',qty:400,unit:'根',loc:'原料仓/A区/货架3/库位09',returned:0}],
+  OB005:[{matCode:'M2005',matName:'电池组',spec:'3.7V-2200mAh',qty:600,unit:'组',loc:'成品仓/B区/货架2/库位11',returned:100}],
+  OB006:[{matCode:'M2006',matName:'螺丝包',spec:'M2*5-100粒',qty:50,unit:'包',loc:'',returned:0}],
+};
+
+// 状态机矩阵（用于展示 + 驱动按钮）
+const MATRIX = [
+  ['保存草稿','✅','❌','❌','❌'],['编辑','✅','❌','❌','❌'],['删除','✅','❌','❌','❌'],
+  ['生效','✅','❌','❌','❌'],['反生效(弃审)','❌','✅','❌','❌'],
+  ['执行(入库/出库)','❌','✅','❌','❌'],['作废','✅','✅','❌','❌'],
+  ['生成退库单','❌','❌','✅','❌'],['详情/打印','✅','✅','✅','✅'],
+];
+function renderMatrix(){
+  document.getElementById('matrixBody').innerHTML = MATRIX.map(r =>
+    `<tr><td><b>${r[0]}</b></td>${r.slice(1).map(c=>`<td>${c==='✅'?'<span style="color:var(--success)">✓ 允许</span>':'<span class="muted">✕</span>'}</td>`).join('')}</tr>`
+  ).join('');
+}
+
+// 状态标签
+function tag(st){ return `<span class="tag ${STATUS_TAG[st]}">${STATUS[st]}</span>`; }
+
+
+// 行操作按钮生成（权限标识注释）
+function rowBtns(order, type){
+  const s = order.status;
+  const btns = [];
+  const B = (text,cls,fn,perm)=>`<button class="btn-link ${cls}" onclick="${fn}('${order.id}')" title="${perm}">${text}</button>`;
+  if(type==='inbound'){
+    if(s==='0'){ btns.push(B('编辑','',`openInboundEdit`, 'warehouse:inboundOrder:edit'));
+      btns.push(B('生效','success',`actInboundAudit`, 'warehouse:inboundOrder:audit'));
+      btns.push(B('作废','danger',`actInboundVoid`, 'warehouse:inboundOrder:void'));
+    } else if(s==='1'){ btns.push(B('详情','',`openInboundEdit`, 'warehouse:inboundOrder:query'));
+      btns.push(B('反生效','warning',`actInboundUnAudit`, 'warehouse:inboundOrder:unAudit'));
+      btns.push(B('入库执行','success',`actInboundStore`, 'warehouse:inboundOrder:store'));
+      btns.push(B('作废','danger',`actInboundVoid`, 'warehouse:inboundOrder:void'));
+    } else if(s==='2'){ btns.push(B('详情','',`openInboundEdit`, 'warehouse:inboundOrder:query'));
+      btns.push(B('生成退库单','info',`genReturnFromInbound`, 'warehouse:inboundOrder:return'));
+    } else { btns.push(B('详情','',`openInboundEdit`, 'warehouse:inboundOrder:query'));
+    }
+    btns.push(B('打印','info',`printInbound`, 'warehouse:inboundOrder:print'));
+  } else if(type==='outbound'){
+    if(s==='0'){ btns.push(B('编辑','',`openOutboundEdit`, 'warehouse:outStoreOrder:edit'));
+      btns.push(B('生效','success',`actOutboundAudit`, 'warehouse:outStoreOrder:audit'));
+      btns.push(B('作废','danger',`actOutboundVoid`, 'warehouse:outStoreOrder:void'));
+    } else if(s==='1'){ btns.push(B('详情','',`openOutboundEdit`, 'warehouse:outStoreOrder:query'));
+      btns.push(B('反生效','warning',`actOutboundUnAudit`, 'warehouse:outStoreOrder:unAudit'));
+      btns.push(B('出库执行','success',`actOutboundConfirm`, 'warehouse:outStoreOrder:confirm'));
+      btns.push(B('作废','danger',`actOutboundVoid`, 'warehouse:outStoreOrder:void'));
+    } else if(s==='2'){ btns.push(B('详情','',`openOutboundEdit`, 'warehouse:outStoreOrder:query'));
+      btns.push(B('生成退库单','info',`genReturnFromOutbound`, 'warehouse:outStoreOrder:return'));
+    } else { btns.push(B('详情','',`openOutboundEdit`, 'warehouse:outStoreOrder:query'));
+    }
+    btns.push(B('打印','info',`printOutbound`, 'warehouse:outStoreOrder:print'));
+  }
+  return `<div class="actions">${btns.join('')}</div>`;
+}
+
+/* ---------- 渲染入库单列表 ---------- */
+function renderInboundList(){
+  const qNo = document.getElementById('inboundQueryNo').value.trim();
+  const qS = document.getElementById('inboundQueryStatus').value;
+  let rows = inboundOrders.filter(o=>o.status!=='__deleted__');
+  if(qNo) rows = rows.filter(o=>o.no.includes(qNo));
+  if(qS!=='') rows = rows.filter(o=>o.status===qS);
+  document.getElementById('inboundTableBody').innerHTML = rows.length? rows.map(o=>
+    `<tr>
+      <td><b>${o.no}</b></td><td>${o.externalCode}</td><td>${o.supplier}</td><td>${o.purchaseNo}</td>
+      <td>${o.operator}</td><td>${o.warehousingTime||'—'}</td><td>${tag(o.status)}</td><td>${o.remark||'—'}</td>
+      <td>${rowBtns(o,'inbound')}</td>
+    </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
+  document.getElementById('navCountInbound').textContent = inboundOrders.filter(o=>o.status!=='__deleted__').length;
+}
+function queryInbound(){ renderInboundList(); }
+function resetInboundQuery(){ document.getElementById('inboundQueryNo').value=''; document.getElementById('inboundQueryStatus').value=''; renderInboundList(); }
+
+/* ---------- 渲染出库单列表 ---------- */
+function renderOutboundList(){
+  const qNo = document.getElementById('outboundQueryNo').value.trim();
+  const qS = document.getElementById('outboundQueryStatus').value;
+  let rows = outboundOrders.filter(o=>o.status!=='__deleted__');
+  if(qNo) rows = rows.filter(o=>o.no.includes(qNo));
+  if(qS!=='') rows = rows.filter(o=>o.status===qS);
+  document.getElementById('outboundTableBody').innerHTML = rows.length? rows.map(o=>
+    `<tr>
+      <td>${o.planNo}</td><td><b>${o.no}</b></td><td>${o.externalCode}</td><td>${o.type}</td>
+      <td>${tag(o.status)}</td><td>${o.outTime||'—'}</td><td>${o.remark||'—'}</td>
+      <td>${rowBtns(o,'outbound')}</td>
+    </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
+  document.getElementById('navCountOutbound').textContent = outboundOrders.filter(o=>o.status!=='__deleted__').length;
+}
+function queryOutbound(){ renderOutboundList(); }
+function resetOutboundQuery(){ document.getElementById('outboundQueryNo').value=''; document.getElementById('outboundQueryStatus').value=''; renderOutboundList(); }
+
+/* ---------- 渲染退库单列表 ---------- */
+function renderReturnList(){
+  const qNo = document.getElementById('returnQueryNo').value.trim();
+  const qS = document.getElementById('returnQueryStatus').value;
+  let rows = returnOrders.filter(o=>o.status!=='__deleted__');
+  if(qNo) rows = rows.filter(o=>o.no.includes(qNo));
+  if(qS!=='') rows = rows.filter(o=>o.status===qS);
+  document.getElementById('returnTableBody').innerHTML = rows.length? rows.map(o=>
+    `<tr>
+      <td><b>${o.no}</b></td><td>${o.refType==='1'?'入库退库':'出库退库'}</td><td>${o.refNo}</td>
+      <td>${tag(o.status)}</td><td class="num">${o.totalQty||'—'}</td><td>${o.reason||'—'}</td>
+      <td>${o.operator}</td><td>${o.returnTime||'—'}</td>
+      <td>${returnRowBtns(o)}</td>
+    </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
+  document.getElementById('navCountReturn').textContent = returnOrders.filter(o=>o.status!=='__deleted__').length;
+}
+function returnRowBtns(o){
+  const s = o.status; const btns=[];
+  const B=(t,c,f)=>`<button class="btn-link ${c}" onclick="${f}('${o.id}')">${t}</button>`;
+  if(s==='0'){ btns.push(B('编辑','',`openReturnEdit`)); btns.push(B('生效','success',`actReturnAudit`)); btns.push(B('作废','danger',`actReturnVoid`)); }
+  else if(s==='1'){ btns.push(B('反生效','warning',`actReturnUnAudit`)); btns.push(B('执行退库','success',`actReturnConfirm`)); btns.push(B('作废','danger',`actReturnVoid`)); }
+  else if(s==='2'){ btns.push(B('详情','',`openReturnEdit`)); }
+  btns.push(B('打印','info',`printReturn`));
+  return `<div class="actions">${btns.join('')}</div>`;
+}
+function printReturn(id){ const o=findR(id); toast('打印退库单：'+o.no,'warning'); }
+function queryReturn(){ renderReturnList(); }
+function resetReturnQuery(){ document.getElementById('returnQueryNo').value=''; document.getElementById('returnQueryStatus').value=''; renderReturnList(); }
+
+/* ---------- 导航 ---------- */
+let currentNav = 'machine';
+function switchNav(nav){
+  currentNav = nav;
+  document.querySelectorAll('.menu-item').forEach(m=>m.classList.toggle('active', m.dataset.nav===nav));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+nav).classList.add('active');
+  const crumb = {machine:'四态状态机', inbound:'入库单', outbound:'出库单', return:'退库单'}[nav];
+  document.getElementById('crumb').textContent = crumb;
+  if(nav==='inbound') renderInboundList();
+  if(nav==='outbound') renderOutboundList();
+  if(nav==='return') renderReturnList();
+}
+document.querySelectorAll('.menu-item[data-nav]').forEach(m=>{
+  m.addEventListener('click',()=>switchNav(m.dataset.nav));
+});
+
+/* ---------- 入库单编辑 ---------- */
+let editingInboundId = null;
+function openInboundAdd(){ editingInboundId = null; showSub('inbound','inbound-edit'); renderInboundEdit(null); }
+function openInboundEdit(id){ editingInboundId = id; showSub('inbound','inbound-edit'); renderInboundEdit(id); }
+function backInbound(){ showSub('inbound','inbound-list'); renderInboundList(); }
+function showSub(parent, sub){
+  const pv = document.getElementById('view-'+parent);
+  pv.querySelectorAll('.sub-view').forEach(s=>s.classList.remove('active'));
+  document.getElementById(sub).classList.add('active');
+}
+function renderInboundEdit(id){
+  const isNew = !id;
+  const o = isNew? {id:'',no:'',externalCode:'',supplier:'',purchaseNo:'',operator:'李制单',warehousingTime:'',status:'0',remark:''} : inboundOrders.find(x=>x.id===id);
+  const s = o.status;
+  const readonly = s==='1'||s==='2'||s==='9';
+  document.getElementById('inboundEditStatus').innerHTML = `状态：${tag(s)}` + (isNew?'<span class="muted">（新增草稿）</span>':'');
+  document.getElementById('inboundFormGrid').innerHTML = `
+    <div class="form-item"><label>单据编号</label><input class="input" value="${o.no}" ${readonly?'disabled':''} placeholder="留空自动生成"></div>
+    <div class="form-item"><label>往来单位</label><input class="input" value="${o.supplier}" ${readonly?'disabled':''} placeholder="选填"></div>
+    <div class="form-item"><label>关联单号</label><input class="input" value="${o.purchaseNo}" ${readonly?'disabled':''} placeholder="选填"></div>
+    <div class="form-item"><label>操作人</label><input class="input" value="${o.operator}" disabled></div>
+    <div class="form-item" style="grid-column:span 2"><label>外部编号</label><input class="input" value="${o.externalCode}" ${readonly?'disabled':''} placeholder="选填"></div>
+    <div class="form-item" style="grid-column:span 2"><label>备注</label><input class="input" value="${o.remark}" ${readonly?'disabled':''}></div>`;
+  // 明细
+  const dets = isNew? [] : (inboundDetails[id]||[]);
+  document.getElementById('inboundDetailOpsHead').innerHTML = (s==='0'&&!isNew)? '<th>操作</th>':'';
+  document.getElementById('inboundDetailBody').innerHTML = dets.length? dets.map(d=>`
+    <tr>
+      <td>${d.batch}</td><td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec}</td>
+      <td class="num">${d.qty}</td><td>${d.unit}</td><td>${d.inspect}</td><td>${d.arrival}</td>
+      <td>${d.loc||'未分配'}</td><td class="num">${d.returned||0}</td>
+      ${(s==='0'&&!isNew)?`<td><button class="btn-link">拆分</button><button class="btn-link danger" onclick="toastInfo('原型演示：删除明细')">删除</button></td>`:''}
+    </tr>`).join('') : `<tr class="no-data"><td colspan="${(s==='0'&&!isNew)?11:10}">${isNew?'新增模式：此处展示待入库物料明细':'暂无明细'}</td></tr>`;
+  // 顶部按钮
+  const bts = [];
+  if(s==='0' && !isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
+    bts.push(`<button class="btn btn-success" onclick="actInboundAudit('${o.id}')">✨ 生效</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
+  } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actInboundUnAudit('${o.id}')">↩ 反生效</button>`);
+    bts.push(`<button class="btn btn-success" onclick="actInboundStore('${o.id}')">⬇ 入库执行</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
+  } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromInbound('${o.id}')">↩ 生成退库单</button>`); }
+  if(!isNew) bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印入库单')">🖨 打印</button>`);
+  document.getElementById('inboundEditBtns').innerHTML = bts.join('');
+}
+
+/* ---------- 出库单编辑 ---------- */
+let editingOutboundId = null;
+function openOutboundAdd(){ editingOutboundId=null; showSub('outbound','outbound-edit'); renderOutboundEdit(null); }
+function openOutboundEdit(id){ editingOutboundId=id; showSub('outbound','outbound-edit'); renderOutboundEdit(id); }
+function backOutbound(){ showSub('outbound','outbound-list'); renderOutboundList(); }
+function renderOutboundEdit(id){
+  const isNew = !id;
+  const o = isNew? {id:'',no:'',planNo:'',externalCode:'',type:'销售出库',status:'0',outTime:'',customer:'',remark:''} : outboundOrders.find(x=>x.id===id);
+  const s = o.status;
+  const readonly = s==='1'||s==='2'||s==='9';
+  document.getElementById('outboundEditStatus').innerHTML = `状态：${tag(s)}`;
+  document.getElementById('outboundFormGrid').innerHTML = `
+    <div class="form-item"><label>出库单号</label><input class="input" value="${o.no}" ${readonly?'disabled':''} placeholder="留空自动生成"></div>
+    <div class="form-item"><label>类型</label><input class="input" value="${o.type}" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>生产工单</label><input class="input" value="${o.planNo}" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>客户</label><input class="input" value="${o.customer||'—'}" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>外部编号</label><input class="input" value="${o.externalCode}" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>计划交期</label><input class="input" value="2026-09-05" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>物流方式</label><input class="input" value="物流" ${readonly?'disabled':''}></div>
+    <div class="form-item"><label>操作人</label><input class="input" value="张仓管" disabled></div>
+    <div class="form-item" style="grid-column:span 2"><label>收货地址</label><input class="input" value="广东省深圳市宝安区科技园" ${readonly?'disabled':''}></div>
+    <div class="form-item" style="grid-column:span 2"><label>备注</label><input class="input" value="${o.remark}" ${readonly?'disabled':''}></div>`;
+  const dets = isNew? [] : (outboundDetails[id]||[]);
+  document.getElementById('outboundDetailOpsHead').innerHTML = (s==='0'&&!isNew)? '<th>操作</th>':'';
+  document.getElementById('outboundDetailBody').innerHTML = dets.length? dets.map(d=>`
+    <tr>
+      <td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec}</td><td class="num">${d.qty}</td><td>${d.unit}</td>
+      <td>${d.loc||'未分配'}</td><td class="num">${d.returned||0}</td>
+      ${(s==='0'&&!isNew)?`<td><button class="btn-link danger" onclick="toastInfo('原型演示：删除明细')">删除</button></td>`:''}
+    </tr>`).join('') : `<tr class="no-data"><td colspan="${(s==='0'&&!isNew)?8:7}">${isNew?'新增模式：此处展示出库明细':'暂无明细'}</td></tr>`;
+  const bts=[];
+  if(s==='0'&&!isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
+    bts.push(`<button class="btn btn-success" onclick="actOutboundAudit('${o.id}')">✨ 生效</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
+  } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actOutboundUnAudit('${o.id}')">↩ 反生效</button>`);
+    bts.push(`<button class="btn btn-success" onclick="actOutboundConfirm('${o.id}')">⬆ 出库执行</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
+  } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromOutbound('${o.id}')">↩ 生成退库单</button>`); }
+  if(!isNew) bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印出库单')">🖨 打印</button>`);
+  document.getElementById('outboundEditBtns').innerHTML = bts.join('');
+}
+
+/* ---------- 退库单编辑 ---------- */
+let editingReturnId = null;
+let returnNewRefType = '1';
+let returnNewRefId = '';
+function renderReturnEditBtns(o){
+  const bts=[];
+  if(o.status==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`);
+    bts.push(`<button class="btn btn-success" onclick="actReturnAudit('${o.id}')">✨ 生效</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="actReturnVoid('${o.id}')">作废</button>`);
+  } else if(o.status==='1'){ bts.push(`<button class="btn btn-warning" onclick="actReturnUnAudit('${o.id}')">↩ 反生效</button>`);
+    bts.push(`<button class="btn btn-success" onclick="actReturnConfirm('${o.id}')">↩ 执行退库</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="actReturnVoid('${o.id}')">作废</button>`);
+  } else if(o.status==='2'){ }
+  bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印</button>`);
+  document.getElementById('returnEditBtns').innerHTML = bts.join('');
+}
+function openReturnAdd(){ editingReturnId=null; showSub('return','return-edit');
+  document.getElementById('returnEditTitle').textContent='新增退库单';
+  document.getElementById('returnRefType').value='1'; returnNewRefType='1';
+  document.getElementById('returnRemark').value='';
+  document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存草稿</button><button class="btn btn-success" onclick="toastInfo('原型演示：生效退库单')">✨ 生效</button>`;
+  renderReturnRefOrders(); }
+function openReturnEdit(id){ editingReturnId=id; showSub('return','return-edit');
+  const o = returnOrders.find(x=>x.id===id);
+  document.getElementById('returnEditTitle').textContent = '退库单详情 '+o.no;
+  document.getElementById('returnRefType').value = o.refType;
+  document.getElementById('returnRemark').value = o.remark||'';
+  renderReturnRefOrders(o);
+  renderReturnEditBtns(o); }
+function backReturn(){ showSub('return','return-list'); renderReturnList(); }
+function renderReturnRefOrders(preset){
+  const rt = document.getElementById('returnRefType').value;
+  const done = rt==='1'? inboundOrders.filter(o=>o.status==='2') : outboundOrders.filter(o=>o.status==='2');
+  document.getElementById('returnRefOrder').innerHTML = done.map(o=>
+    `<option value="${o.id}">${o.no} · ${rt==='1'?o.supplier:o.type}</option>`).join('');
+  if(preset){ document.getElementById('returnRefOrder').value = preset.refId; loadReturnDetail(preset.refId, preset); }
+  else if(done.length){ document.getElementById('returnRefOrder').value=done[0].id; loadReturnDetail(done[0].id); }
+  else { clearReturnDetail('暂无可退的已完成单据'); }
+}
+function onReturnRefTypeChange(){ renderReturnRefOrders(); }
+function onReturnRefOrderChange(){ loadReturnDetail(document.getElementById('returnRefOrder').value); }
+function loadReturnDetail(refId, preset){
+  const rt = document.getElementById('returnRefType').value;
+  const src = rt==='1'? inboundDetails[refId] : outboundDetails[refId];
+  const refOrder = (rt==='1'?inboundOrders:outboundOrders).find(o=>o.id===refId);
+  if(!src||!src.length){ clearReturnDetail('原单无明细或不可退'); return; }
+  document.getElementById('returnDetailTip').innerHTML = `原单 ${refOrder.no} · 可退数量 = 原单数量 − 已退数量`;
+  document.getElementById('returnDetailBody').innerHTML = src.map(d=>{
+    const avail = Math.max(0,(d.qty||0)-(d.returned||0));
+    return `<tr>
+      <td>${d.batch||'—'}</td><td>${d.matCode}</td><td>${d.matName}</td>
+      <td class="num">${d.qty}</td><td class="num">${d.returned||0}</td><td class="num" style="color:var(--primary);font-weight:600">${avail}</td>
+      <td class="num"><input class="input" style="width:90px;text-align:right" type="number" min="0" max="${avail}" value="${Math.min(avail, d.qty||0)}"></td>
+      <td><select class="select" style="width:130px">${REASONS.map(r=>`<option ${r==='品质不良'?'selected':''}>${r}</option>`).join('')}</select></td>
+    </tr>`;
+  }).join('');
+}
+function clearReturnDetail(tip){ document.getElementById('returnDetailTip').innerHTML = tip||''; document.getElementById('returnDetailBody').innerHTML = `<tr class="no-data"><td colspan="8">${tip||'请选择原单'}</td></tr>`; }
+
+/* ---------- 状态机动作（入库单） ---------- */
+function actInboundAudit(id){ askConfirm('是否确认<生效>入库单？', ()=>{ const o=findI(id); o.status='1'; toast('入库单已生效','success'); renderAll(); }); }
+function actInboundUnAudit(id){ askConfirm('反生效后将回到草稿可编辑，是否继续？', ()=>{ const o=findI(id); o.status='0'; toast('已反生效，回到草稿','warning'); renderAll(); }); }
+function actInboundStore(id){ askConfirm('确认入库执行？将占用库存并推ERP。', ()=>{ const o=findI(id); o.status='2'; o.warehousingTime=now(); toast('入库完成，状态→已完成','success'); renderAll(); }); }
+function actInboundVoid(id){ askConfirm('确认作废该入库单？将逻辑作废并保留明细。', ()=>{ const o=findI(id); if(o.status==='2'){toast('已完成单据不可作废，请走退库单','danger');return;} o.status='9'; toast('已作废','success'); renderAll(); }); }
+function findI(id){ return inboundOrders.find(x=>x.id===id); }
+
+/* ---------- 状态机动作（出库单） ---------- */
+function actOutboundAudit(id){ askConfirm('是否确认<生效>出库单？', ()=>{ const o=findO(id); o.status='1'; toast('出库单已生效','success'); renderAll(); }); }
+function actOutboundUnAudit(id){ askConfirm('反生效后将回到草稿可编辑，是否继续？', ()=>{ const o=findO(id); o.status='0'; toast('已反生效，回到草稿','warning'); renderAll(); }); }
+function actOutboundConfirm(id){ askConfirm('确认出库执行？将扣库存并推ERP。', ()=>{ const o=findO(id); o.status='2'; o.outTime=now(); toast('出库完成，状态→已完成','success'); renderAll(); }); }
+function actOutboundVoid(id){ askConfirm('确认作废该出库单？', ()=>{ const o=findO(id); o.status='9'; toast('已作废','success'); renderAll(); }); }
+function findO(id){ return outboundOrders.find(x=>x.id===id); }
+
+/* ---------- 状态机动作（退库单） ---------- */
+function actReturnAudit(id){ askConfirm('是否确认<生效>退库单？', ()=>{ const o=findR(id); o.status='1'; toast('退库单已生效','success'); renderAll(); }); }
+function actReturnUnAudit(id){ askConfirm('反生效后将回到草稿，是否继续？', ()=>{ const o=findR(id); o.status='0'; toast('已反生效，回到草稿','warning'); renderAll(); }); }
+function actReturnConfirm(id){ askConfirm('确认执行退库？将冲销库存并推红字ERP。', ()=>{ const o=findR(id); o.status='2'; o.returnTime=now(); o.totalQty=120; toast('退库完成，原单状态不变','success'); renderAll(); }); }
+function actReturnVoid(id){ askConfirm('确认作废该退库单？', ()=>{ const o=findR(id); o.status='9'; toast('已作废','success'); renderAll(); }); }
+function findR(id){ return returnOrders.find(x=>x.id===id); }
+
+/* ---------- 生成退库单 ---------- */
+function genReturnFromInbound(id){ genReturn(id,'1'); }
+function genReturnFromOutbound(id){ genReturn(id,'2'); }
+function genReturn(refId, rt){
+  // 新建退库单草稿并带出明细
+  const newRt = { id:'RT'+Date.now().toString().slice(-6), no:'TK'+now().replace(/\D/g,'').slice(0,10), refType:rt, refId,
+    refNo:(rt==='1'?findI(refId):findO(refId)).no, status:'0', totalQty:0, reason:'品质不良', operator:'张仓管', returnTime:'', remark:'' };
+  returnOrders.unshift(newRt);
+  switchNav('return');
+  openReturnEdit(newRt.id);
+  toast('已生成退库单（草稿），请填写退库数量','success');
+  renderAll();
+}
+
+/* ---------- 通用 ---------- */
+function now(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function renderAll(){
+  if(currentNav==='inbound') renderInboundList();
+  if(currentNav==='outbound') renderOutboundList();
+  if(currentNav==='return') renderReturnList();
+  if(currentNav==='inbound'&&document.getElementById('view-inbound').querySelector('.sub-view.active').id==='inbound-edit') renderInboundEdit(editingInboundId);
+  if(currentNav==='outbound'&&document.getElementById('view-outbound').querySelector('.sub-view.active').id==='outbound-edit') renderOutboundEdit(editingOutboundId);
+  if(currentNav==='return'&&document.getElementById('view-return').querySelector('.sub-view.active').id==='return-edit') renderReturnEditActive();
+  updateCounts();
+}
+function renderReturnEditActive(){ if(editingReturnId){ openReturnEdit(editingReturnId); } else { renderReturnRefOrders(); } }
+function updateCounts(){
+  document.getElementById('navCountInbound').textContent=inboundOrders.filter(o=>o.status!=='__deleted__').length;
+  document.getElementById('navCountOutbound').textContent=outboundOrders.filter(o=>o.status!=='__deleted__').length;
+  document.getElementById('navCountReturn').textContent=returnOrders.filter(o=>o.status!=='__deleted__').length;
+}
+
+/* ---------- Toast / Confirm ---------- */
+function toast(msg,type){ const w=document.getElementById('toastWrap'); const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg; w.appendChild(t); setTimeout(()=>{t.style.opacity=0;t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400);},2200); }
+function toastInfo(msg){ toast(msg,'warning'); }
+function printInbound(id){ const o=findI(id); toast('打印入库单：'+o.no,'warning'); }
+function printOutbound(id){ const o=findO(id); toast('打印出库单：'+o.no,'warning'); }
+let confirmCb=null;
+function askConfirm(msg,cb){ document.getElementById('confirmTitle').textContent='操作确认'; document.getElementById('confirmMsg').innerHTML=msg; confirmCb=cb; document.getElementById('confirmMask').classList.add('show'); }
+function closeConfirm(){ confirmCb=null; document.getElementById('confirmMask').classList.remove('show'); }
+function confirmOk(){ if(confirmCb){ const cb=confirmCb; confirmCb=null; document.getElementById('confirmMask').classList.remove('show'); cb(); } }
+document.getElementById('confirmMask').addEventListener('click',e=>{ if(e.target.id==='confirmMask') closeConfirm(); });
+
+/* ---------- 初始化 ---------- */
+renderMatrix(); updateCounts(); renderInboundList(); renderOutboundList(); renderReturnList();
+</script>
+</body>
+</html>
