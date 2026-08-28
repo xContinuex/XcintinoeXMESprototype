@@ -213,8 +213,14 @@
     <div class="menu-item active" data-nav="inbound"><span class="icon">⬇</span> 入库单 <span class="count-pill" id="navCountInbound">0</span></div>
     <div class="menu-item" data-nav="outbound"><span class="icon">⬆</span> 出库单 <span class="count-pill" id="navCountOutbound">0</span></div>
     <div class="menu-item" data-nav="return"><span class="icon">↩</span> 退库单 <span class="count-pill" id="navCountReturn">0</span></div>
+    <div class="menu-title">明细查询</div>
+    <div class="menu-item" data-nav="inboundDetail"><span class="icon">📋</span> 入库明细</div>
+    <div class="menu-item" data-nav="outboundDetail"><span class="icon">📤</span> 出库明细</div>
+    <div class="menu-title">库存管理</div>
+    <div class="menu-item" data-nav="inventory"><span class="icon">🏬</span> 库存明细</div>
+    <div class="menu-item" data-nav="inventoryStats"><span class="icon">📊</span> 库存统计</div>
     <div class="menu-title">状态说明</div>
-    <div class="menu-item active" data-nav="machine"><span class="icon">♻</span> 四态状态机</div>
+    <div class="menu-item" data-nav="machine"><span class="icon">♻</span> 四态状态机</div>
     <div class="foot">原型演示 · 数据为本地模拟</div>
   </aside>
 
@@ -442,6 +448,148 @@
         </div>
       </div>
 
+      <!-- ===== 入库明细视图 ===== -->
+      <div class="view" id="view-inboundDetail">
+        <div class="card">
+          <div class="card-head">入库明细 <span class="sub">（warehouse_rel_inbound_detail 关联查询）</span></div>
+          <div class="card-body">
+            <div class="toolbar mb-12">
+              <div class="field"><label>入库单号</label><input class="input" id="idQueryNo" style="width:160px" placeholder="请输入"></div>
+              <div class="field"><label>批次号</label><input class="input" id="idQueryBatch" style="width:150px" placeholder="请输入"></div>
+              <div class="field"><label>物料名称</label><input class="input" id="idQueryMat" style="width:140px" placeholder="请输入"></div>
+              <div class="field"><label>检验结果</label>
+                <select class="select" id="idQueryInspect" style="width:110px">
+                  <option value="">全部</option><option>合格</option><option>不合格</option><option>待检</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="renderInboundDetail()">查询</button>
+              <button class="btn btn-plain" onclick="resetInboundDetailQuery()">重置</button>
+            </div>
+            <table class="table">
+              <thead><tr>
+                <th>入库单号</th><th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格型号</th><th class="num">数量</th><th>单位</th>
+                <th>检验结果</th><th>到货日期</th><th>有效期至</th><th>仓库库位</th><th>入库时间</th>
+              </tr></thead>
+              <tbody id="inboundDetailTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 出库明细视图 ===== -->
+      <div class="view" id="view-outboundDetail">
+        <div class="card">
+          <div class="card-head">出库明细 <span class="sub">（warehouse_out_store_detail 关联查询）</span></div>
+          <div class="card-body">
+            <div class="toolbar mb-12">
+              <div class="field"><label>出库单号</label><input class="input" id="odQueryNo" style="width:160px" placeholder="请输入"></div>
+              <div class="field"><label>批次号</label><input class="input" id="odQueryBatch" style="width:150px" placeholder="请输入"></div>
+              <div class="field"><label>物料名称</label><input class="input" id="odQueryMat" style="width:140px" placeholder="请输入"></div>
+              <div class="field"><label>检验结果</label>
+                <select class="select" id="odQueryInspect" style="width:110px">
+                  <option value="">全部</option><option>合格</option><option>不合格</option><option>待检</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="renderOutboundDetail()">查询</button>
+              <button class="btn btn-plain" onclick="resetOutboundDetailQuery()">重置</button>
+            </div>
+            <table class="table">
+              <thead><tr>
+                <th>出库单号</th><th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格型号</th><th class="num">出库数量</th><th>单位</th>
+                <th>检验结果</th><th>仓库</th><th>仓库库位</th><th>出库时间</th>
+              </tr></thead>
+              <tbody id="outboundDetailTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 库存明细视图 ===== -->
+      <div class="view" id="view-inventory">
+        <div class="card">
+          <div class="card-head">库存明细 <span class="sub">（warehouse_inventory_info · 仅显示 quantity>0）</span></div>
+          <div class="card-body">
+            <div class="toolbar mb-12">
+              <div class="field"><label>关键字</label><input class="input" id="invQueryKeyword" style="width:180px" placeholder="批次号/物料编码/名称/库位"></div>
+              <div class="field"><label>临期筛选</label>
+                <select class="select" id="invQueryExpiry" style="width:150px">
+                  <option value="">全部</option><option value="expired">已过期</option>
+                  <option value="threeDay">3天内到期</option><option value="tenDay">10天内到期</option><option value="thirtyDay">30天内到期</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="renderInventory()">查询</button>
+              <button class="btn btn-plain" onclick="resetInventoryQuery()">重置</button>
+            </div>
+            <table class="table">
+              <thead><tr>
+                <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格型号</th><th>仓库库位</th>
+                <th class="num">实际库存</th><th class="num">锁定数量</th><th class="num">可用数量</th>
+                <th>检验结果</th><th>到货日期</th><th>有效期至</th><th>到期状态</th>
+              </tr></thead>
+              <tbody id="inventoryTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 库存统计视图 ===== -->
+      <div class="view" id="view-inventoryStats">
+        <!-- 统计列表 -->
+        <div class="sub-view active" id="invstats-list">
+          <div class="card">
+            <div class="card-head">库存统计 <span class="sub">（按物料聚合 · 可用 = 总库存 − 总锁定）</span></div>
+            <div class="card-body">
+              <div class="toolbar mb-12">
+                <div class="field"><label>关键字</label><input class="input" id="isQueryKeyword" style="width:180px" placeholder="物料编码/名称"></div>
+                <button class="btn btn-primary" onclick="renderInventoryStats()">查询</button>
+                <button class="btn btn-plain" onclick="resetInventoryStatsQuery()">重置</button>
+              </div>
+              <table class="table">
+                <thead><tr>
+                  <th>物料编号</th><th>物料名称</th><th>规格型号</th><th class="num">总库存</th><th class="num">总锁定</th>
+                  <th class="num">可用库存</th><th>仓库分布</th><th>操作</th>
+                </tr></thead>
+                <tbody id="inventoryStatsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- 物料详情：仓库分布 -->
+        <div class="sub-view" id="invstats-detail">
+          <div class="card">
+            <div class="form-actions">
+              <button class="btn btn-plain" onclick="showStatsList()">⬅ 返回列表</button>
+            </div>
+            <div class="card-head">物料信息 <span class="sub" id="isDetailMatInfo"></span></div>
+            <div class="card-body">
+              <div class="form-grid" id="isDetailForm"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">库存信息 <span class="sub">（该物料在各仓库的分布）</span></div>
+            <div class="card-body">
+              <table class="table">
+                <thead><tr>
+                  <th>仓库信息</th><th class="num">库存数量</th><th class="num">锁定数量</th><th class="num">可用数量</th><th>操作</th>
+                </tr></thead>
+                <tbody id="isDetailStockBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card" id="isBatchCard" style="display:none">
+            <div class="card-head">仓库批次信息 <span class="sub" id="isBatchWarehouse"></span></div>
+            <div class="card-body">
+              <table class="table">
+                <thead><tr>
+                  <th>批次号</th><th class="num">库存数量</th><th class="num">锁定数量</th><th class="num">可用数量</th><th>入库时间</th>
+                </tr></thead>
+                <tbody id="isBatchBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -492,6 +640,63 @@ let returnOrders = [
   { id:'RT003', no:'TK20260815003', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'2', totalQty:50, reason:'客户退货', operator:'王主管', returnTime:'2026-08-22 09:18', remark:'已完成' },
   { id:'RT004', no:'TK20260815004', refType:'2', refNo:'CK20260810005', refId:'OB005', status:'9', totalQty:30, reason:'其他', operator:'李制单', returnTime:'', remark:'制单错误作废' },
 ];
+
+// ===== 入库明细 mock（warehouse_rel_inbound_detail）=====
+let inboundDetailRows = [
+  { inboundNo:'RK20260801001', batch:'P240711-001', matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', qty:5000, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-10', validity:'2027-08-10', loc:'成品仓/A区/货架1/库位01', inboundTime:'2026-08-10 14:20' },
+  { inboundNo:'RK20260801002', batch:'P240712-008', matCode:'M1002', matName:'贴片电容', spec:'0805-100nF', qty:3000, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-12', validity:'2027-08-12', loc:'原料仓/B区/货架2/库位05', inboundTime:'2026-08-12 09:45' },
+  { inboundNo:'RK20260801003', batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', qty:1200, unit:'pcs', inspect:'待检', arrivalDate:'2026-08-15', validity:'2027-02-15', loc:'原料仓/A区/货架3/库位08', inboundTime:'2026-08-15 11:02' },
+  { inboundNo:'RK20260801004', batch:'P240714-015', matCode:'M1004', matName:'晶振', spec:'32.768KHz', qty:800, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-18', validity:'2028-08-18', loc:'成品仓/B区/货架1/库位12', inboundTime:'2026-08-18 16:30' },
+  { inboundNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', qty:2000, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-20', validity:'2026-08-30', loc:'原料仓/A区/货架5/库位02', inboundTime:'2026-08-20 14:32' },
+  { inboundNo:'RK20260801005', batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', qty:1500, unit:'pcs', inspect:'不合格', arrivalDate:'2026-08-20', validity:'2026-08-25', loc:'原料仓/A区/货架5/库位03', inboundTime:'2026-08-20 14:32' },
+];
+
+// ===== 出库明细 mock（warehouse_out_store_detail）=====
+let outboundDetailRows = [
+  { outboundNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', qty:600, unit:'pcs', inspect:'合格', warehouse:'成品仓', loc:'成品仓/B区/货架2/库位11', outTime:'2026-08-25 16:40' },
+  { outboundNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', qty:200, unit:'pcs', inspect:'合格', warehouse:'成品仓', loc:'成品仓/B区/货架2/库位11', outTime:'2026-08-25 16:40' },
+  { outboundNo:'CK20260810004', batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', qty:400, unit:'pcs', inspect:'合格', warehouse:'原料仓', loc:'原料仓/A区/货架3/库位08', outTime:'2026-08-25 10:05' },
+  { outboundNo:'CK20260810003', batch:'P240714-015', matCode:'M1004', matName:'晶振', spec:'32.768KHz', qty:300, unit:'pcs', inspect:'合格', warehouse:'成品仓', loc:'成品仓/B区/货架1/库位12', outTime:'2026-08-24 15:12' },
+  { outboundNo:'CK20260810002', batch:'P240711-001', matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', qty:1200, unit:'pcs', inspect:'合格', warehouse:'成品仓', loc:'成品仓/A区/货架1/库位01', outTime:'2026-08-23 09:20' },
+];
+
+// ===== 库存明细 mock（warehouse_inventory_info）=====
+let inventoryRows = [
+  { batch:'P240711-001', matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', loc:'成品仓/A区/货架1/库位01', qty:3800, locked:500, inspect:'合格', arrivalDate:'2026-08-10', validity:'2027-08-10' },
+  { batch:'P240712-008', matCode:'M1002', matName:'贴片电容', spec:'0805-100nF', loc:'原料仓/B区/货架2/库位05', qty:3000, locked:0, inspect:'合格', arrivalDate:'2026-08-12', validity:'2027-08-12' },
+  { batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', loc:'原料仓/A区/货架3/库位08', qty:800, locked:200, inspect:'待检', arrivalDate:'2026-08-15', validity:'2027-02-15' },
+  { batch:'P240714-015', matCode:'M1004', matName:'晶振', spec:'32.768KHz', loc:'成品仓/B区/货架1/库位12', qty:500, locked:0, inspect:'合格', arrivalDate:'2026-08-18', validity:'2028-08-18' },
+  { batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', loc:'原料仓/A区/货架5/库位02', qty:1200, locked:300, inspect:'合格', arrivalDate:'2026-08-20', validity:'2026-08-30' },
+  { batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', loc:'原料仓/A区/货架5/库位03', qty:1500, locked:0, inspect:'不合格', arrivalDate:'2026-08-20', validity:'2026-08-25' },
+];
+
+// ===== 库存统计 mock（按物料聚合，参考 GROUP_CONCAT 仓库分布）=====
+let inventoryStatsRows = [
+  { matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', totalQty:3800, totalLocked:500, warehouses:'成品仓/A区', inventoryMin:2000, inventoryMax:10000 },
+  { matCode:'M1002', matName:'贴片电容', spec:'0805-100nF', totalQty:3000, totalLocked:0, warehouses:'原料仓/B区', inventoryMin:1000, inventoryMax:8000 },
+  { matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', totalQty:800, totalLocked:200, warehouses:'原料仓/A区', inventoryMin:2000, inventoryMax:6000 },
+  { matCode:'M1004', matName:'晶振', spec:'32.768KHz', totalQty:500, totalLocked:0, warehouses:'成品仓/B区', inventoryMin:800, inventoryMax:3000 },
+  { matCode:'M1005', matName:'钽电容', spec:'C型-47uF', totalQty:1200, totalLocked:300, warehouses:'原料仓/A区/货架5', inventoryMin:500, inventoryMax:5000 },
+  { matCode:'M1006', matName:'二极管', spec:'SOD-123', totalQty:1500, totalLocked:0, warehouses:'原料仓/A区/货架5', inventoryMin:500, inventoryMax:4000 },
+];
+
+// 库存统计下钻：物料 → 仓库分布 → 批次
+let statsWarehouseDetail = {
+  M1001:[{ warehouse:'成品仓/A区/货架1/库位01', qty:3800, locked:500 }],
+  M1002:[{ warehouse:'原料仓/B区/货架2/库位05', qty:3000, locked:0 }],
+  M1003:[{ warehouse:'原料仓/A区/货架3/库位08', qty:800, locked:200 }],
+  M1004:[{ warehouse:'成品仓/B区/货架1/库位12', qty:500, locked:0 }],
+  M1005:[{ warehouse:'原料仓/A区/货架5/库位02', qty:1200, locked:300 }],
+  M1006:[{ warehouse:'原料仓/A区/货架5/库位03', qty:1500, locked:0 }],
+};
+let statsBatchDetail = {
+  M1001:{ '成品仓/A区/货架1/库位01':[{ batch:'P240711-001', qty:3800, locked:500, inboundTime:'2026-08-10 14:20' }] },
+  M1002:{ '原料仓/B区/货架2/库位05':[{ batch:'P240712-008', qty:3000, locked:0, inboundTime:'2026-08-12 09:45' }] },
+  M1003:{ '原料仓/A区/货架3/库位08':[{ batch:'P240713-021', qty:800, locked:200, inboundTime:'2026-08-15 11:02' }] },
+  M1004:{ '成品仓/B区/货架1/库位12':[{ batch:'P240714-015', qty:500, locked:0, inboundTime:'2026-08-18 16:30' }] },
+  M1005:{ '原料仓/A区/货架5/库位02':[{ batch:'P240715-033', qty:1200, locked:300, inboundTime:'2026-08-20 14:32' }] },
+  M1006:{ '原料仓/A区/货架5/库位03':[{ batch:'P240715-034', qty:1500, locked:0, inboundTime:'2026-08-20 14:32' }] },
+};
 
 // 明细
 let inboundDetails = {
@@ -636,11 +841,16 @@ function switchNav(nav){
   document.querySelectorAll('.menu-item').forEach(m=>m.classList.toggle('active', m.dataset.nav===nav));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+nav).classList.add('active');
-  const crumb = {machine:'四态状态机', inbound:'入库单', outbound:'出库单', return:'退库单'}[nav];
+  const crumb = {machine:'四态状态机', inbound:'入库单', outbound:'出库单', return:'退库单',
+    inboundDetail:'入库明细', outboundDetail:'出库明细', inventory:'库存明细', inventoryStats:'库存统计'}[nav];
   document.getElementById('crumb').textContent = crumb;
   if(nav==='inbound') renderInboundList();
   if(nav==='outbound') renderOutboundList();
   if(nav==='return') renderReturnList();
+  if(nav==='inboundDetail') renderInboundDetail();
+  if(nav==='outboundDetail') renderOutboundDetail();
+  if(nav==='inventory') renderInventory();
+  if(nav==='inventoryStats') showStatsList();
 }
 document.querySelectorAll('.menu-item[data-nav]').forEach(m=>{
   m.addEventListener('click',()=>switchNav(m.dataset.nav));
@@ -843,7 +1053,186 @@ function renderAll(){
   if(currentNav==='inbound'&&document.getElementById('view-inbound').querySelector('.sub-view.active').id==='inbound-edit') renderInboundEdit(editingInboundId);
   if(currentNav==='outbound'&&document.getElementById('view-outbound').querySelector('.sub-view.active').id==='outbound-edit') renderOutboundEdit(editingOutboundId);
   if(currentNav==='return'&&document.getElementById('view-return').querySelector('.sub-view.active').id==='return-edit') renderReturnEditActive();
+  if(currentNav==='inboundDetail') renderInboundDetail();
+  if(currentNav==='outboundDetail') renderOutboundDetail();
+  if(currentNav==='inventory') renderInventory();
   updateCounts();
+}
+
+/* =========================================================
+ * 入库明细（warehouse_rel_inbound_detail）
+ * 参照 Mapper：关联入库单/待入库/物料/库位，支持单号/批次/物料/检验/时间筛选
+ * ========================================================= */
+function renderInboundDetail(){
+  const qNo = document.getElementById('idQueryNo').value.trim();
+  const qBatch = document.getElementById('idQueryBatch').value.trim();
+  const qMat = document.getElementById('idQueryMat').value.trim();
+  const qInspect = document.getElementById('idQueryInspect').value;
+  let rows = inboundDetailRows.filter(r=>{
+    if(qNo && !r.inboundNo.includes(qNo)) return false;
+    if(qBatch && !r.batch.includes(qBatch)) return false;
+    if(qMat && !r.matName.includes(qMat) && !r.matCode.includes(qMat)) return false;
+    if(qInspect && r.inspect!==qInspect) return false;
+    return true;
+  });
+  document.getElementById('inboundDetailTableBody').innerHTML = rows.length? rows.map(r=>`
+    <tr>
+      <td><b>${r.inboundNo}</b></td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td><td>${r.spec}</td>
+      <td class="num">${r.qty}</td><td>${r.unit}</td><td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
+      <td>${r.arrivalDate}</td><td>${r.validity}</td><td>${r.loc}</td><td>${r.inboundTime}</td>
+    </tr>`).join('') : `<tr class="no-data"><td colspan="12">暂无数据</td></tr>`;
+}
+function resetInboundDetailQuery(){
+  ['idQueryNo','idQueryBatch','idQueryMat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('idQueryInspect').value='';
+  renderInboundDetail();
+}
+
+/* =========================================================
+ * 出库明细（warehouse_out_store_detail）
+ * 参照 Mapper：关联出库单/物料/库位，支持单号/批次/物料/检验/时间筛选
+ * ========================================================= */
+function renderOutboundDetail(){
+  const qNo = document.getElementById('odQueryNo').value.trim();
+  const qBatch = document.getElementById('odQueryBatch').value.trim();
+  const qMat = document.getElementById('odQueryMat').value.trim();
+  const qInspect = document.getElementById('odQueryInspect').value;
+  let rows = outboundDetailRows.filter(r=>{
+    if(qNo && !r.outboundNo.includes(qNo)) return false;
+    if(qBatch && !r.batch.includes(qBatch)) return false;
+    if(qMat && !r.matName.includes(qMat) && !r.matCode.includes(qMat)) return false;
+    if(qInspect && r.inspect!==qInspect) return false;
+    return true;
+  });
+  document.getElementById('outboundDetailTableBody').innerHTML = rows.length? rows.map(r=>`
+    <tr>
+      <td><b>${r.outboundNo}</b></td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td><td>${r.spec}</td>
+      <td class="num">${r.qty}</td><td>${r.unit}</td>
+      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
+      <td>${r.warehouse}</td><td>${r.loc}</td><td>${r.outTime}</td>
+    </tr>`).join('') : `<tr class="no-data"><td colspan="11">暂无数据</td></tr>`;
+}
+function resetOutboundDetailQuery(){
+  ['odQueryNo','odQueryBatch','odQueryMat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('odQueryInspect').value='';
+  renderOutboundDetail();
+}
+
+/* =========================================================
+ * 库存明细（warehouse_inventory_info）
+ * 参照 Mapper：仅 quantity>0，支持关键字(批次/编码/名称/库位)、临期筛选(过期/3/10/30天)
+ * 可用数量 = 实际库存 - 锁定数量
+ * ========================================================= */
+function expiryState(validity){
+  const today = new Date('2026-08-28');
+  const exp = new Date(validity);
+  const diffDays = Math.floor((exp - today)/86400000);
+  if(diffDays < 0) return { text:'已过期', cls:'tag-void' };
+  if(diffDays <= 3) return { text:'3天内到期', cls:'tag-warning' };
+  if(diffDays <= 10) return { text:'10天内到期', cls:'tag-await' };
+  if(diffDays <= 30) return { text:'30天内到期', cls:'tag-await' };
+  return { text:'正常', cls:'tag-draft' };
+}
+function renderInventory(){
+  const qKeyword = document.getElementById('invQueryKeyword').value.trim();
+  const qExpiry = document.getElementById('invQueryExpiry').value;
+  let rows = inventoryRows.filter(r=>{
+    if(qKeyword && !(r.batch.includes(qKeyword)||r.matCode.includes(qKeyword)||r.matName.includes(qKeyword)||r.loc.includes(qKeyword))) return false;
+    if(qExpiry){
+      const st = expiryState(r.validity);
+      const map = { expired:'已过期', threeDay:'3天内到期', tenDay:'10天内到期', thirtyDay:'30天内到期' };
+      if(st.text !== map[qExpiry]) return false;
+    }
+    return true;
+  });
+  document.getElementById('inventoryTableBody').innerHTML = rows.length? rows.map(r=>{
+    const avail = r.qty - r.locked;
+    const st = expiryState(r.validity);
+    return `<tr>
+      <td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td><td>${r.spec}</td><td>${r.loc}</td>
+      <td class="num" style="font-weight:600">${r.qty}</td><td class="num" style="color:var(--warning)">${r.locked}</td>
+      <td class="num" style="color:var(--success);font-weight:600">${avail}</td>
+      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
+      <td>${r.arrivalDate}</td><td>${r.validity}</td><td><span class="tag ${st.cls}">${st.text}</span></td>
+    </tr>`;
+  }).join('') : `<tr class="no-data"><td colspan="12">暂无数据</td></tr>`;
+}
+function resetInventoryQuery(){
+  document.getElementById('invQueryKeyword').value='';
+  document.getElementById('invQueryExpiry').value='';
+  renderInventory();
+}
+
+/* =========================================================
+ * 库存统计（warehouse_inventory_info 按物料聚合）
+ * 参照 Mapper：SUM(quantity) 总库存, SUM(locked) 总锁定, 可用=总-锁定, GROUP_CONCAT 仓库分布
+ * 行预警：低于库存下限显示红色，接近下限(≤1.5倍)显示黄色
+ * 下钻：物料详情 → 仓库分布 → 批次详情
+ * ========================================================= */
+function renderInventoryStats(){
+  const qKeyword = document.getElementById('isQueryKeyword').value.trim();
+  let rows = inventoryStatsRows.filter(r=>{
+    if(qKeyword && !(r.matCode.includes(qKeyword)||r.matName.includes(qKeyword)||r.spec.includes(qKeyword))) return false;
+    return true;
+  });
+  document.getElementById('inventoryStatsTableBody').innerHTML = rows.length? rows.map(r=>{
+    const avail = r.totalQty - r.totalLocked;
+    const min = Number(r.inventoryMin||0), max = Number(r.inventoryMax||0);
+    let rowCls = '';
+    if(min>0 && r.totalQty < min) rowCls = 'style="background:#fde2e2"';
+    else if(min>0 && r.totalQty <= min*1.5) rowCls = 'style="background:#fef3e2"';
+    return `<tr ${rowCls}>
+      <td><b>${r.matCode}</b></td><td>${r.matName}</td><td>${r.spec}</td>
+      <td class="num" style="font-weight:600">${r.totalQty}</td><td class="num" style="color:var(--warning)">${r.totalLocked}</td>
+      <td class="num" style="color:var(--success);font-weight:600">${avail}</td>
+      <td>${r.warehouses}</td>
+      <td><button class="btn-link" onclick="openStatsDetail('${r.matCode}')">详情</button></td>
+    </tr>`;
+  }).join('') : `<tr class="no-data"><td colspan="8">暂无数据</td></tr>`;
+}
+function resetInventoryStatsQuery(){
+  document.getElementById('isQueryKeyword').value='';
+  renderInventoryStats();
+}
+let statsCurrentMat = null;
+function openStatsDetail(matCode){
+  const r = inventoryStatsRows.find(x=>x.matCode===matCode);
+  if(!r) return;
+  statsCurrentMat = matCode;
+  document.getElementById('view-inventoryStats').querySelectorAll('.sub-view').forEach(s=>s.classList.remove('active'));
+  document.getElementById('invstats-detail').classList.add('active');
+  // 物料信息
+  document.getElementById('isDetailMatInfo').textContent = `${r.matCode} - ${r.matName} · ${r.spec}`;
+  document.getElementById('isDetailForm').innerHTML = `
+    <div class="form-item"><label>物料编号</label><input class="input" value="${r.matCode}" disabled></div>
+    <div class="form-item"><label>物料名称</label><input class="input" value="${r.matName}" disabled></div>
+    <div class="form-item"><label>规格型号</label><input class="input" value="${r.spec}" disabled></div>
+    <div class="form-item"><label>单位</label><input class="input" value="pcs" disabled></div>`;
+  // 仓库分布
+  const stocks = statsWarehouseDetail[matCode]||[];
+  document.getElementById('isDetailStockBody').innerHTML = stocks.map(s=>`
+    <tr>
+      <td>${s.warehouse}</td><td class="num" style="font-weight:600">${s.qty}</td><td class="num" style="color:var(--warning)">${s.locked}</td>
+      <td class="num" style="color:var(--success);font-weight:600">${s.qty-s.locked}</td>
+      <td><button class="btn-link" onclick="showBatchDetail('${matCode}','${s.warehouse}')">批次详情</button></td>
+    </tr>`).join('') || `<tr class="no-data"><td colspan="5">暂无仓库分布数据</td></tr>`;
+  // 隐藏批次卡片
+  document.getElementById('isBatchCard').style.display='none';
+}
+function showBatchDetail(matCode, warehouse){
+  document.getElementById('isBatchCard').style.display='block';
+  document.getElementById('isBatchWarehouse').textContent = `当前仓库：${warehouse}`;
+  const batches = (statsBatchDetail[matCode]||{})[warehouse]||[];
+  document.getElementById('isBatchBody').innerHTML = batches.map(b=>`
+    <tr>
+      <td>${b.batch}</td><td class="num" style="font-weight:600">${b.qty}</td><td class="num" style="color:var(--warning)">${b.locked}</td>
+      <td class="num" style="color:var(--success);font-weight:600">${b.qty-b.locked}</td><td>${b.inboundTime}</td>
+    </tr>`).join('') || `<tr class="no-data"><td colspan="5">暂无批次数据</td></tr>`;
+}
+function showStatsList(){
+  document.getElementById('view-inventoryStats').querySelectorAll('.sub-view').forEach(s=>s.classList.remove('active'));
+  document.getElementById('invstats-list').classList.add('active');
+  renderInventoryStats();
 }
 function renderReturnEditActive(){
   if(editingReturnId){ openReturnEdit(editingReturnId); }
@@ -873,6 +1262,7 @@ document.getElementById('confirmMask').addEventListener('click',e=>{ if(e.target
 
 /* ---------- 初始化 ---------- */
 renderMatrix(); updateCounts(); renderInboundList(); renderOutboundList(); renderReturnList();
+renderInboundDetail(); renderOutboundDetail(); renderInventory(); renderInventoryStats();
 </script>
 </body>
 </html>
