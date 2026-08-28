@@ -311,7 +311,7 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-head">入库记录 <span class="sub">（扫描批次号添加）</span></div>
+            <div class="card-head">入库记录 <span class="sub">（扫描批次号入库）</span></div>
             <div class="card-body">
               <div class="toolbar mb-12" id="inboundScanBar">
                 <div class="field"><label>📡 扫描批次号</label>
@@ -323,7 +323,7 @@
               <table class="table">
                 <thead><tr>
                   <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th class="num">数量</th><th>单位</th>
-                  <th>检验结果</th><th>到货类型</th><th>仓库位置</th><th class="num">已退数量</th><th id="inboundDetailOpsHead"></th>
+                  <th>检验结果</th><th>到货类型</th><th>仓库位置</th><th id="inboundDetailOpsHead"></th>
                 </tr></thead>
                 <tbody id="inboundDetailBody"></tbody>
               </table>
@@ -354,7 +354,7 @@
               </div>
               <table class="table">
                 <thead><tr>
-                  <th>配货计划单号</th><th>出库单号</th><th>类型</th><th>状态</th>
+                  <th>配货计划单号</th><th>出库单号</th><th>关联单号</th><th>往来单位</th><th>类型</th><th>状态</th>
                   <th>出库时间</th><th>备注</th><th style="min-width:340px">操作</th>
                 </tr></thead>
                 <tbody id="outboundTableBody"></tbody>
@@ -386,7 +386,7 @@
               <table class="table">
                 <thead><tr>
                   <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th class="num">数量</th><th>单位</th>
-                  <th>检验结果</th><th>仓库位置</th><th class="num">已退数量</th><th id="outboundDetailOpsHead"></th>
+                  <th>检验结果</th><th>仓库位置</th><th id="outboundDetailOpsHead"></th>
                 </tr></thead>
                 <tbody id="outboundDetailBody"></tbody>
               </table>
@@ -676,12 +676,12 @@ let inboundOrders = [
   { id:'IB006', no:'RK20260801006', externalCode:'EXT-88006', supplier:'东莞精密元件', purchaseNo:'CG2026072035', operator:'李制单', warehousingTime:'', status:'9', remark:'制单错误作废' },
 ];
 let outboundOrders = [
-  { id:'OB001', no:'CK20260810001', planNo:'PH2026073001', externalCode:'EXTO-7001', type:'销售出库', status:'0', outTime:'', customer:'深圳市华科电子', contact:'陈工', phone:'13800138001', remark:'待制单' },
-  { id:'OB002', no:'CK20260810002', planNo:'PH2026073002', externalCode:'EXTO-7002', type:'生产领料', status:'0', outTime:'', customer:'生产部', contact:'李工', phone:'13900139002', remark:'' },
-  { id:'OB003', no:'CK20260810003', planNo:'PH2026073005', externalCode:'EXTO-7003', type:'销售出库', status:'1', outTime:'', customer:'东莞精密元件', contact:'王工', phone:'13700137003', remark:'已生效待出库' },
-  { id:'OB004', no:'CK20260810004', planNo:'PH2026073006', externalCode:'EXTO-7004', type:'生产领料', status:'1', outTime:'', customer:'生产部', contact:'赵工', phone:'13600136004', remark:'已生效待出库' },
-  { id:'OB005', no:'CK20260810005', planNo:'PH2026073009', externalCode:'EXTO-7005', type:'销售出库', status:'2', outTime:'2026-08-25 16:40', customer:'惠州精密制造', contact:'钱工', phone:'13500135005', remark:'已完成' },
-  { id:'OB006', no:'CK20260810006', planNo:'PH2026073010', externalCode:'EXTO-7006', type:'生产领料', status:'9', outTime:'', customer:'生产部', contact:'孙工', phone:'13400134006', remark:'已作废' },
+  { id:'OB001', no:'CK20260810001', planNo:'PH2026073001', refNo:'XS2026072501', externalCode:'EXTO-7001', type:'销售出库', status:'0', outTime:'', customer:'深圳市华科电子', contact:'陈工', phone:'13800138001', remark:'待制单' },
+  { id:'OB002', no:'CK20260810002', planNo:'PH2026073002', refNo:'SC2026072602', externalCode:'EXTO-7002', type:'生产领料', status:'0', outTime:'', customer:'生产部', contact:'李工', phone:'13900139002', remark:'' },
+  { id:'OB003', no:'CK20260810003', planNo:'PH2026073005', refNo:'XS2026072603', externalCode:'EXTO-7003', type:'销售出库', status:'1', outTime:'', customer:'东莞精密元件', contact:'王工', phone:'13700137003', remark:'已生效待出库' },
+  { id:'OB004', no:'CK20260810004', planNo:'PH2026073006', refNo:'SC2026072704', externalCode:'EXTO-7004', type:'生产领料', status:'1', outTime:'', customer:'生产部', contact:'赵工', phone:'13600136004', remark:'已生效待出库' },
+  { id:'OB005', no:'CK20260810005', planNo:'PH2026073009', refNo:'XS2026072705', externalCode:'EXTO-7005', type:'销售出库', status:'2', outTime:'2026-08-25 16:40', customer:'惠州精密制造', contact:'钱工', phone:'13500135005', remark:'已完成' },
+  { id:'OB006', no:'CK20260810006', planNo:'PH2026073010', refNo:'SC2026072806', externalCode:'EXTO-7006', type:'生产领料', status:'9', outTime:'', customer:'生产部', contact:'孙工', phone:'13400134006', remark:'已作废' },
 ];
 let returnOrders = [
   { id:'RT001', no:'TK20260815001', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'0', totalQty:0, remark:'错入多入', operator:'张仓管', returnTime:'', remarkNote:'待生效' },
@@ -872,7 +872,7 @@ function renderOutboundList(){
   if(qS!=='') rows = rows.filter(o=>o.status===qS);
   document.getElementById('outboundTableBody').innerHTML = rows.length? rows.map(o=>
     `<tr>
-      <td>${o.planNo}</td><td><b>${o.no}</b></td><td>${o.type}</td>
+      <td>${o.planNo}</td><td><b>${o.no}</b></td><td>${o.refNo||'—'}</td><td>${o.customer||'—'}</td><td>${o.type}</td>
       <td>${tag(o.status)}</td><td>${o.outTime||'—'}</td><td>${o.remark||'—'}</td>
       <td>${rowBtns(o,'outbound')}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
@@ -968,9 +968,9 @@ function renderInboundEdit(id){
       <td>${d.batch}</td><td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec}</td>
       ${editable?`<td class="num"><input class="input" style="width:80px;text-align:right" type="number" min="0" value="${d.qty}" onchange="editDetailQty('inbound',${i},this.value)"></td>`:`<td class="num">${d.qty}</td>`}
       <td>${d.unit}</td><td>${inspectTag(d.inspect)}</td><td>${d.arrival||'—'}</td>
-      <td>${d.loc||'未分配'}</td><td class="num">${d.returned||0}</td>
-      ${editable?`<td><button class="btn-link danger" onclick="removeDetail('inbound',${i})">删除</button></td>`:''}
-    </tr>`).join('') : `<tr class="no-data"><td colspan="${editable?11:10}">${isNew?'请扫描批次号添加明细':'暂无明细'}</td></tr>`;
+      <td>${d.loc||'未分配'}</td>
+      ${editable?`<td><button class="btn-link" onclick="toastInfo('原型演示：拆分批次 ${d.batch}')">拆分</button><button class="btn-link danger" onclick="removeDetail('inbound',${i})">删除</button></td>`:''}
+    </tr>`).join('') : `<tr class="no-data"><td colspan="${editable?10:9}">${isNew?'请扫描批次号添加明细':'暂无明细'}</td></tr>`;
   // 顶部按钮
   const bts = [];
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
@@ -1015,9 +1015,9 @@ function renderOutboundEdit(id){
     <tr>
       <td>${d.batch}</td><td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec}</td>
       ${editable?`<td class="num"><input class="input" style="width:80px;text-align:right" type="number" min="0" value="${d.qty}" onchange="editDetailQty('outbound',${i},this.value)"></td>`:`<td class="num">${d.qty}</td>`}
-      <td>${d.unit}</td><td>${inspectTag(d.inspect)}</td><td>${d.loc||'未分配'}</td><td class="num">${d.returned||0}</td>
-      ${editable?`<td><button class="btn-link danger" onclick="removeDetail('outbound',${i})">删除</button></td>`:''}
-    </tr>`).join('') : `<tr class="no-data"><td colspan="${editable?10:9}">${isNew?'请扫描批次号添加明细':'暂无明细'}</td></tr>`;
+      <td>${d.unit}</td><td>${inspectTag(d.inspect)}</td><td>${d.loc||'未分配'}</td>
+      ${editable?`<td><button class="btn-link" onclick="toastInfo('原型演示：拆分批次 ${d.batch}')">拆分</button><button class="btn-link danger" onclick="removeDetail('outbound',${i})">删除</button></td>`:''}
+    </tr>`).join('') : `<tr class="no-data"><td colspan="${editable?9:8}">${isNew?'请扫描批次号添加明细':'暂无明细'}</td></tr>`;
   const bts=[];
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
   } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
