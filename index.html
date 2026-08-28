@@ -452,13 +452,6 @@
           <div class="card">
             <div class="card-head">退库明细 <span class="sub" id="returnDetailTip"></span></div>
             <div class="card-body">
-              <div class="toolbar mb-12" id="returnScanBar">
-                <div class="field"><label>📡 扫描批次号</label>
-                  <input class="input" id="returnScanInput" style="width:220px" placeholder="扫描或输入批次号后回车" onkeydown="if(event.key==='Enter')scanBatchAdd('return')">
-                </div>
-                <button class="btn btn-primary" onclick="scanBatchAdd('return')">➕ 添加</button>
-                <span class="hint">扫描批次号自动带出物料信息</span>
-              </div>
               <table class="table">
                 <thead><tr>
                   <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th>单位</th><th class="num">原单数量</th><th class="num">已退数量</th>
@@ -1104,8 +1097,6 @@ function loadReturnDetail(refId, preset){
 function renderReturnDetailTable(){
   const editable = (editingReturnId===null);
   const isNewMode = editingReturnId===null;
-  // 扫描区显隐：新增模式可扫描；编辑详情只读
-  document.getElementById('returnScanBar').style.display = editable ? 'flex' : 'none';
   document.getElementById('returnDetailBody').innerHTML = returnEditDetails.length? returnEditDetails.map((d,i)=>{
     const avail = d.fromOrder ? Math.max(0,(d.originalQty||0)-(d.returnedQty||0)) : (d.stock||0);
     return `<tr>
@@ -1118,7 +1109,7 @@ function renderReturnDetailTable(){
         :`<td class="num">${d.returnQty||0}</td><td>${d.remark||'—'}</td>`}
       ${editable?`<td><button class="btn-link danger" onclick="removeDetail('return',${i})">删除</button></td>`:''}
     </tr>`;
-  }).join('') : `<tr class="no-data"><td colspan="11">${isNewMode?'请选择原单或扫描批次号添加明细':'暂无明细'}</td></tr>`;
+  }).join('') : `<tr class="no-data"><td colspan="11">${isNewMode?'请选择原单带出明细':'暂无明细'}</td></tr>`;
 }
 function clearReturnDetail(tip){ document.getElementById('returnDetailTip').innerHTML = tip||''; returnEditDetails=[]; document.getElementById('returnDetailBody').innerHTML = `<tr class="no-data"><td colspan="11">${tip||'请选择原单'}</td></tr>`; }
 
@@ -1130,7 +1121,8 @@ function inspectTag(inspect){
   return inspect==='合格' ? '<span class="tag tag-active">合格</span>' : '<span class="tag tag-concession">让步接收</span>';
 }
 function scanBatchAdd(kind){
-  const inputId = {inbound:'inboundScanInput', outbound:'outboundScanInput', return:'returnScanInput'}[kind];
+  const inputId = {inbound:'inboundScanInput', outbound:'outboundScanInput'}[kind];
+  if(!inputId){ toast('退库单不支持扫描批次号','warning'); return; }
   const input = document.getElementById(inputId);
   const code = (input.value||'').trim();
   if(!code){ toast('请先扫描批次号','warning'); return; }
@@ -1140,23 +1132,16 @@ function scanBatchAdd(kind){
   let arr;
   if(kind==='inbound') arr = inboundEditDetails;
   else if(kind==='outbound') arr = outboundEditDetails;
-  else arr = returnEditDetails;
+  else return;
   // 防重复
   if(arr.some(d=>d.batch===code)){ toast('该批次已添加：'+code,'warning'); input.value=''; return; }
-  if(kind==='return'){
-    // 退库单：从批次库带出（原单数量=当前库存，可退=当前库存）
-    arr.push({ batch:lib.batch, matCode:lib.matCode, matName:lib.matName, spec:lib.spec, unit:lib.unit,
-      originalQty:lib.stock||0, returnedQty:0, returnQty:0, remark:'', stock:lib.stock||0, fromOrder:false });
-  } else {
-    arr.push({ batch:lib.batch, matCode:lib.matCode, matName:lib.matName, spec:lib.spec, unit:lib.unit,
-      inspect:lib.inspect, arrival:lib.arrival, loc:lib.loc, qty:0, returned:0 });
-  }
+  arr.push({ batch:lib.batch, matCode:lib.matCode, matName:lib.matName, spec:lib.spec, unit:lib.unit,
+    inspect:lib.inspect, arrival:lib.arrival, loc:lib.loc, qty:0, returned:0 });
   input.value='';
   toast('已添加：'+lib.matName+'（'+code+'）','success');
   // 重渲染当前编辑页
   if(kind==='inbound') renderInboundEdit(editingInboundId);
-  else if(kind==='outbound') renderOutboundEdit(editingOutboundId);
-  else renderReturnDetailTable();
+  else renderOutboundEdit(editingOutboundId);
 }
 function editDetailQty(kind, idx, val){
   const arr = kind==='inbound'? inboundEditDetails : kind==='outbound'? outboundEditDetails : returnEditDetails;
