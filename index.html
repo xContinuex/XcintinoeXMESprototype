@@ -750,12 +750,16 @@ function renderReturnEditBtns(o){
   bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印</button>`);
   document.getElementById('returnEditBtns').innerHTML = bts.join('');
 }
-function openReturnAdd(){ editingReturnId=null; showSub('return','return-edit');
+function openReturnAdd(presetRefType, presetRefId){
+  editingReturnId=null; showSub('return','return-edit');
   document.getElementById('returnEditTitle').textContent='新增退库单';
-  document.getElementById('returnRefType').value='1'; returnNewRefType='1';
+  const rt = presetRefType || '1';
+  returnNewRefType = rt; returnNewRefId = presetRefId || '';
+  document.getElementById('returnRefType').value = rt;
   document.getElementById('returnRemark').value='';
-  document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存草稿</button><button class="btn btn-success" onclick="toastInfo('原型演示：生效退库单')">✨ 生效</button>`;
-  renderReturnRefOrders(); }
+  // 新增模式按钮：仅保留【保存】【生效】
+  document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button><button class="btn btn-success" onclick="toastInfo('原型演示：生效退库单')">✨ 生效</button>`;
+  renderReturnRefOrders(presetRefId); }
 function openReturnEdit(id){ editingReturnId=id; showSub('return','return-edit');
   const o = returnOrders.find(x=>x.id===id);
   document.getElementById('returnEditTitle').textContent = '退库单详情 '+o.no;
@@ -769,7 +773,9 @@ function renderReturnRefOrders(preset){
   const done = rt==='1'? inboundOrders.filter(o=>o.status==='2') : outboundOrders.filter(o=>o.status==='2');
   document.getElementById('returnRefOrder').innerHTML = done.map(o=>
     `<option value="${o.id}">${o.no} · ${rt==='1'?o.supplier:o.type}</option>`).join('');
-  if(preset){ document.getElementById('returnRefOrder').value = preset.refId; loadReturnDetail(preset.refId, preset); }
+  // 支持两种预设：对象(编辑模式,含refId) / 字符串(新增模式带原单id)
+  const presetId = (typeof preset === 'object' && preset) ? preset.refId : preset;
+  if(presetId){ document.getElementById('returnRefOrder').value = presetId; loadReturnDetail(presetId); }
   else if(done.length){ document.getElementById('returnRefOrder').value=done[0].id; loadReturnDetail(done[0].id); }
   else { clearReturnDetail('暂无可退的已完成单据'); }
 }
@@ -821,14 +827,10 @@ function findR(id){ return returnOrders.find(x=>x.id===id); }
 function genReturnFromInbound(id){ genReturn(id,'1'); }
 function genReturnFromOutbound(id){ genReturn(id,'2'); }
 function genReturn(refId, rt){
-  // 新建退库单草稿并带出明细
-  const newRt = { id:'RT'+Date.now().toString().slice(-6), no:'TK'+now().replace(/\D/g,'').slice(0,10), refType:rt, refId,
-    refNo:(rt==='1'?findI(refId):findO(refId)).no, status:'0', totalQty:0, reason:'品质不良', operator:'张仓管', returnTime:'', remark:'' };
-  returnOrders.unshift(newRt);
+  // 跳转到新增退库单页面，自动带出原单明细，按钮仅保留【保存】【生效】
   switchNav('return');
-  openReturnEdit(newRt.id);
-  toast('已生成退库单（草稿），请填写退库数量','success');
-  renderAll();
+  openReturnAdd(rt, refId);
+  toast('已跳转新增退库单，请填写退库数量','success');
 }
 
 /* ---------- 通用 ---------- */
@@ -842,7 +844,15 @@ function renderAll(){
   if(currentNav==='return'&&document.getElementById('view-return').querySelector('.sub-view.active').id==='return-edit') renderReturnEditActive();
   updateCounts();
 }
-function renderReturnEditActive(){ if(editingReturnId){ openReturnEdit(editingReturnId); } else { renderReturnRefOrders(); } }
+function renderReturnEditActive(){
+  if(editingReturnId){ openReturnEdit(editingReturnId); }
+  else {
+    // 新增模式：保留预设类型与原单，按钮仅保留【保存】【生效】
+    document.getElementById('returnRefType').value = returnNewRefType;
+    document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button><button class="btn btn-success" onclick="toastInfo('原型演示：生效退库单')">✨ 生效</button>`;
+    renderReturnRefOrders(returnNewRefId || null);
+  }
+}
 function updateCounts(){
   document.getElementById('navCountInbound').textContent=inboundOrders.filter(o=>o.status!=='__deleted__').length;
   document.getElementById('navCountOutbound').textContent=outboundOrders.filter(o=>o.status!=='__deleted__').length;
