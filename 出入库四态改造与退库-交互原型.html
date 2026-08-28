@@ -508,7 +508,7 @@
       <!-- ===== 退库明细视图 ===== -->
       <div class="view" id="view-returnDetail">
         <div class="card">
-          <div class="card-head">退库明细 <span class="sub">（warehouse_return_detail 关联退库单查询）</span></div>
+          <div class="card-head">退库明细 <span class="sub">（warehouse_return_detail 关联查询）</span></div>
           <div class="card-body">
             <div class="toolbar mb-12">
               <div class="field"><label>退库单号</label><input class="input" id="rdQueryNo" style="width:160px" placeholder="请输入"></div>
@@ -519,15 +519,19 @@
                   <option value="">全部</option><option value="1">入库退库</option><option value="2">出库退库</option>
                 </select>
               </div>
-              <div class="field"><label>备注</label><input class="input" id="rdQueryReason" style="width:150px" placeholder="请输入备注"></div>
+              <div class="field"><label>检验结果</label>
+                <select class="select" id="rdQueryInspect" style="width:110px">
+                  <option value="">全部</option><option>合格</option><option>不合格</option><option>待检</option>
+                </select>
+              </div>
               <button class="btn btn-primary" onclick="renderReturnDetail()">查询</button>
               <button class="btn btn-plain" onclick="resetReturnDetailQuery()">重置</button>
             </div>
             <table class="table">
               <thead><tr>
-                <th>退库单号</th><th>来源类型</th><th>原单据号</th><th>批次号</th><th>物料编号</th><th>物料名称</th>
-                <th class="num">原单数量</th><th class="num">已退数量</th><th class="num">本次退库数量</th>
-                <th>备注</th><th>库位</th><th>状态</th><th>退库时间</th>
+                <th>退库单号</th><th>来源类型</th><th>原单据号</th><th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格型号</th>
+                <th class="num">原单数量</th><th class="num">已退数量</th><th class="num">本次退库数量</th><th>单位</th>
+                <th>检验结果</th><th>备注</th><th>仓库库位</th><th>状态</th><th>退库时间</th>
               </tr></thead>
               <tbody id="returnDetailTableBody"></tbody>
             </table>
@@ -692,13 +696,13 @@ let outboundDetailRows = [
 
 // ===== 退库明细 mock（warehouse_return_detail）=====
 let returnDetailRows = [
-  { returnNo:'TK20260815003', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+  { returnNo:'TK20260815003', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'合格',
     originalQty:2000, returnedQty:50, returnQty:50, remark:'客户退货', loc:'原料仓/A区/货架5/库位02', status:'2', returnTime:'2026-08-22 09:18' },
-  { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+  { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'合格',
     originalQty:600, returnedQty:0, returnQty:100, remark:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
-  { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+  { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'合格',
     originalQty:200, returnedQty:0, returnQty:20, remark:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
-  { returnNo:'TK20260815001', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+  { returnNo:'TK20260815001', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'待检',
     originalQty:2000, returnedQty:50, returnQty:30, remark:'错入多入', loc:'原料仓/A区/货架5/库位02', status:'0', returnTime:'' },
 ];
 
@@ -1172,31 +1176,33 @@ function renderReturnDetail(){
   const qBatch = document.getElementById('rdQueryBatch').value.trim();
   const qMat = document.getElementById('rdQueryMat').value.trim();
   const qType = document.getElementById('rdQueryType').value;
-  const qRemark = document.getElementById('rdQueryReason').value.trim();
+  const qInspect = document.getElementById('rdQueryInspect').value;
   let rows = returnDetailRows.filter(r=>{
     if(qNo && !r.returnNo.includes(qNo)) return false;
     if(qBatch && !r.batch.includes(qBatch)) return false;
     if(qMat && !r.matName.includes(qMat) && !r.matCode.includes(qMat)) return false;
     if(qType && r.refType!==qType) return false;
-    if(qRemark && !(r.remark||'').includes(qRemark)) return false;
+    if(qInspect && r.inspect!==qInspect) return false;
     return true;
   });
   document.getElementById('returnDetailTableBody').innerHTML = rows.length? rows.map(r=>`
     <tr>
       <td><b>${r.returnNo}</b></td>
       <td>${r.refType==='1'?'<span class="tag tag-draft">入库退库</span>':'<span class="tag tag-await">出库退库</span>'}</td>
-      <td>${r.refOrderNo}</td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td>
+      <td>${r.refOrderNo}</td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td><td>${r.spec||'—'}</td>
       <td class="num">${r.originalQty}</td><td class="num">${r.returnedQty}</td>
       <td class="num" style="font-weight:600;color:var(--danger)">${r.returnQty}</td>
+      <td>${r.unit||'—'}</td>
+      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
       <td>${r.remark||'—'}</td><td>${r.loc}</td>
       <td>${tag(r.status)}</td>
       <td>${r.returnTime||'—'}</td>
-    </tr>`).join('') : `<tr class="no-data"><td colspan="13">暂无数据</td></tr>`;
+    </tr>`).join('') : `<tr class="no-data"><td colspan="16">暂无数据</td></tr>`;
 }
 function resetReturnDetailQuery(){
   ['rdQueryNo','rdQueryBatch','rdQueryMat'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('rdQueryType').value='';
-  document.getElementById('rdQueryReason').value='';
+  document.getElementById('rdQueryInspect').value='';
   renderReturnDetail();
 }
 
