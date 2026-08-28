@@ -403,7 +403,7 @@
               <table class="table">
                 <thead><tr>
                   <th>退库单号</th><th>来源类型</th><th>原单据号</th><th>状态</th><th class="num">退库数量</th>
-                  <th>退库原因</th><th>操作人</th><th>退库完成时间</th><th style="min-width:300px">操作</th>
+                  <th>备注</th><th>操作人</th><th>退库完成时间</th><th style="min-width:300px">操作</th>
                 </tr></thead>
                 <tbody id="returnTableBody"></tbody>
               </table>
@@ -519,11 +519,7 @@
                   <option value="">全部</option><option value="1">入库退库</option><option value="2">出库退库</option>
                 </select>
               </div>
-              <div class="field"><label>退库原因</label>
-                <select class="select" id="rdQueryReason" style="width:130px">
-                  <option value="">全部</option><option>错入多入</option><option>品质不良</option><option>生产退料</option><option>客户退货</option><option>其他</option>
-                </select>
-              </div>
+              <div class="field"><label>备注</label><input class="input" id="rdQueryReason" style="width:150px" placeholder="请输入备注"></div>
               <button class="btn btn-primary" onclick="renderReturnDetail()">查询</button>
               <button class="btn btn-plain" onclick="resetReturnDetailQuery()">重置</button>
             </div>
@@ -531,7 +527,7 @@
               <thead><tr>
                 <th>退库单号</th><th>来源类型</th><th>原单据号</th><th>批次号</th><th>物料编号</th><th>物料名称</th>
                 <th class="num">原单数量</th><th class="num">已退数量</th><th class="num">本次退库数量</th>
-                <th>退库原因</th><th>库位</th><th>状态</th><th>退库时间</th>
+                <th>备注</th><th>库位</th><th>状态</th><th>退库时间</th>
               </tr></thead>
               <tbody id="returnDetailTableBody"></tbody>
             </table>
@@ -650,7 +646,6 @@
  * ========================================================= */
 const STATUS = { 0:'草稿', 1:'已生效', 2:'已完成', 9:'已作废' };
 const STATUS_TAG = { 0:'tag-draft', 1:'tag-active', 2:'tag-done', 9:'tag-void' };
-const REASONS = ['错入多入','品质不良','生产退料','客户退货','其他'];
 
 // mock 数据
 let inboundOrders = [
@@ -670,10 +665,10 @@ let outboundOrders = [
   { id:'OB006', no:'CK20260810006', planNo:'PH2026073010', externalCode:'EXTO-7006', type:'生产领料', status:'9', outTime:'', remark:'已作废' },
 ];
 let returnOrders = [
-  { id:'RT001', no:'TK20260815001', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'0', totalQty:0, reason:'错入多入', operator:'张仓管', returnTime:'', remark:'待生效' },
-  { id:'RT002', no:'TK20260815002', refType:'2', refNo:'CK20260810005', refId:'OB005', status:'1', totalQty:0, reason:'品质不良', operator:'张仓管', returnTime:'', remark:'已生效待执行' },
-  { id:'RT003', no:'TK20260815003', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'2', totalQty:50, reason:'客户退货', operator:'王主管', returnTime:'2026-08-22 09:18', remark:'已完成' },
-  { id:'RT004', no:'TK20260815004', refType:'2', refNo:'CK20260810005', refId:'OB005', status:'9', totalQty:30, reason:'其他', operator:'李制单', returnTime:'', remark:'制单错误作废' },
+  { id:'RT001', no:'TK20260815001', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'0', totalQty:0, remark:'错入多入', operator:'张仓管', returnTime:'', remarkNote:'待生效' },
+  { id:'RT002', no:'TK20260815002', refType:'2', refNo:'CK20260810005', refId:'OB005', status:'1', totalQty:0, remark:'品质不良', operator:'张仓管', returnTime:'', remarkNote:'已生效待执行' },
+  { id:'RT003', no:'TK20260815003', refType:'1', refNo:'RK20260801005', refId:'IB005', status:'2', totalQty:50, remark:'客户退货', operator:'王主管', returnTime:'2026-08-22 09:18', remarkNote:'已完成' },
+  { id:'RT004', no:'TK20260815004', refType:'2', refNo:'CK20260810005', refId:'OB005', status:'9', totalQty:30, remark:'其他', operator:'李制单', returnTime:'', remarkNote:'制单错误作废' },
 ];
 
 // ===== 入库明细 mock（warehouse_rel_inbound_detail）=====
@@ -698,13 +693,13 @@ let outboundDetailRows = [
 // ===== 退库明细 mock（warehouse_return_detail）=====
 let returnDetailRows = [
   { returnNo:'TK20260815003', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
-    originalQty:2000, returnedQty:50, returnQty:50, reason:'客户退货', loc:'原料仓/A区/货架5/库位02', status:'2', returnTime:'2026-08-22 09:18' },
+    originalQty:2000, returnedQty:50, returnQty:50, remark:'客户退货', loc:'原料仓/A区/货架5/库位02', status:'2', returnTime:'2026-08-22 09:18' },
   { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
-    originalQty:600, returnedQty:0, returnQty:100, reason:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
+    originalQty:600, returnedQty:0, returnQty:100, remark:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
   { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
-    originalQty:200, returnedQty:0, returnQty:20, reason:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
+    originalQty:200, returnedQty:0, returnQty:20, remark:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
   { returnNo:'TK20260815001', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
-    originalQty:2000, returnedQty:50, returnQty:30, reason:'错入多入', loc:'原料仓/A区/货架5/库位02', status:'0', returnTime:'' },
+    originalQty:2000, returnedQty:50, returnQty:30, remark:'错入多入', loc:'原料仓/A区/货架5/库位02', status:'0', returnTime:'' },
 ];
 
 // ===== 库存明细 mock（warehouse_inventory_info）=====
@@ -861,7 +856,7 @@ function renderReturnList(){
   document.getElementById('returnTableBody').innerHTML = rows.length? rows.map(o=>
     `<tr>
       <td><b>${o.no}</b></td><td>${o.refType==='1'?'入库退库':'出库退库'}</td><td>${o.refNo}</td>
-      <td>${tag(o.status)}</td><td class="num">${o.totalQty||'—'}</td><td>${o.reason||'—'}</td>
+      <td>${tag(o.status)}</td><td class="num">${o.totalQty||'—'}</td><td>${o.remark||'—'}</td>
       <td>${o.operator}</td><td>${o.returnTime||'—'}</td>
       <td>${returnRowBtns(o)}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
@@ -1169,21 +1164,21 @@ function resetOutboundDetailQuery(){
 
 /* =========================================================
  * 退库明细（warehouse_return_detail）
- * 参照技术方案 §4.1：明细表字段 original_quantity/returned_quantity/return_quantity/return_reason
- * 支持筛选：退库单号、批次号、物料名称、来源类型、退库原因
+ * 参照技术方案 §4.1：明细表字段 original_quantity/returned_quantity/return_quantity/备注
+ * 支持筛选：退库单号、批次号、物料名称、来源类型、备注
  * ========================================================= */
 function renderReturnDetail(){
   const qNo = document.getElementById('rdQueryNo').value.trim();
   const qBatch = document.getElementById('rdQueryBatch').value.trim();
   const qMat = document.getElementById('rdQueryMat').value.trim();
   const qType = document.getElementById('rdQueryType').value;
-  const qReason = document.getElementById('rdQueryReason').value;
+  const qRemark = document.getElementById('rdQueryReason').value.trim();
   let rows = returnDetailRows.filter(r=>{
     if(qNo && !r.returnNo.includes(qNo)) return false;
     if(qBatch && !r.batch.includes(qBatch)) return false;
     if(qMat && !r.matName.includes(qMat) && !r.matCode.includes(qMat)) return false;
     if(qType && r.refType!==qType) return false;
-    if(qReason && r.reason!==qReason) return false;
+    if(qRemark && !(r.remark||'').includes(qRemark)) return false;
     return true;
   });
   document.getElementById('returnDetailTableBody').innerHTML = rows.length? rows.map(r=>`
@@ -1193,7 +1188,7 @@ function renderReturnDetail(){
       <td>${r.refOrderNo}</td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td>
       <td class="num">${r.originalQty}</td><td class="num">${r.returnedQty}</td>
       <td class="num" style="font-weight:600;color:var(--danger)">${r.returnQty}</td>
-      <td>${r.reason}</td><td>${r.loc}</td>
+      <td>${r.remark||'—'}</td><td>${r.loc}</td>
       <td>${tag(r.status)}</td>
       <td>${r.returnTime||'—'}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="13">暂无数据</td></tr>`;
