@@ -728,8 +728,9 @@ function renderOutboundEdit(id){
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actOutboundUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actOutboundConfirm('${o.id}')">⬆ 出库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
-  } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromOutbound('${o.id}')">↩ 生成退库单</button>`); }
-  if(s==='1'||s==='2') bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印出库单')">🖨 打印出库单</button>`);
+  } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromOutbound('${o.id}')">↩ 生成退库单</button>`);
+    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印出库单')">🖨 打印出库单</button>`);
+  }
   document.getElementById('outboundEditBtns').innerHTML = bts.join('');
 }
 
