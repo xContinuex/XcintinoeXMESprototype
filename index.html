@@ -531,7 +531,7 @@
               <thead><tr>
                 <th>退库单号</th><th>来源类型</th><th>原单据号</th><th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格型号</th>
                 <th class="num">原单数量</th><th class="num">已退数量</th><th class="num">本次退库数量</th><th>单位</th>
-                <th>检验结果</th><th>备注</th><th>仓库库位</th><th>状态</th><th>退库时间</th>
+                <th>检验结果</th><th>备注</th><th>仓库库位</th><th>退库时间</th>
               </tr></thead>
               <tbody id="returnDetailTableBody"></tbody>
             </table>
@@ -1194,9 +1194,8 @@ function renderReturnDetail(){
       <td>${r.unit||'—'}</td>
       <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
       <td>${r.remark||'—'}</td><td>${r.loc}</td>
-      <td>${tag(r.status)}</td>
       <td>${r.returnTime||'—'}</td>
-    </tr>`).join('') : `<tr class="no-data"><td colspan="16">暂无数据</td></tr>`;
+    </tr>`).join('') : `<tr class="no-data"><td colspan="15">暂无数据</td></tr>`;
 }
 function resetReturnDetailQuery(){
   ['rdQueryNo','rdQueryBatch','rdQueryMat'].forEach(id=>document.getElementById(id).value='');
