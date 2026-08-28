@@ -1004,8 +1004,7 @@ function renderReturnEditBtns(o){
   } else if(o.status==='1'){ bts.push(`<button class="btn btn-warning" onclick="actReturnUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actReturnConfirm('${o.id}')">↩ 执行退库</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actReturnVoid('${o.id}')">作废</button>`);
-    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印退库单</button>`);
-  } else if(o.status==='2'){ bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印退库单</button>`); }
+  } else if(o.status==='2'){ }
   document.getElementById('returnEditBtns').innerHTML = bts.join('');
 }
 function openReturnAdd(presetRefType, presetRefId){
