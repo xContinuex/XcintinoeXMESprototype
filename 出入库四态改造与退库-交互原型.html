@@ -618,7 +618,7 @@ function returnRowBtns(o){
   const s = o.status; const btns=[];
   const B=(t,c,f)=>`<button class="btn-link ${c}" onclick="${f}('${o.id}')">${t}</button>`;
   if(s==='0'){ btns.push(B('编辑','',`openReturnEdit`)); btns.push(B('生效','success',`actReturnAudit`)); btns.push(B('删除','danger',`delReturn`)); }
-  else if(s==='1'){ btns.push(B('反生效','warning',`actReturnUnAudit`)); btns.push(B('执行退库','success',`actReturnConfirm`)); btns.push(B('作废','danger',`actReturnVoid`)); }
+  else if(s==='1'){ btns.push(B('详情','',`openReturnEdit`)); btns.push(B('反生效','warning',`actReturnUnAudit`)); btns.push(B('执行退库','success',`actReturnConfirm`)); btns.push(B('作废','danger',`actReturnVoid`)); }
   else if(s==='2'){ btns.push(B('详情','',`openReturnEdit`)); }
   btns.push(B('打印','info',`printReturn`));
   return `<div class="actions">${btns.join('')}</div>`;
