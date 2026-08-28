@@ -682,12 +682,11 @@ function renderInboundEdit(id){
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
   } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actInboundAudit('${o.id}')">✨ 生效</button>`);
-    bts.push(`<button class="btn btn-danger" onclick="delInbound('${o.id}')">🗑 删除</button>`);
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actInboundUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actInboundStore('${o.id}')">⬇ 入库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
   } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromInbound('${o.id}')">↩ 生成退库单</button>`); }
-  if(!isNew) bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印入库单')">🖨 打印</button>`);
+  if(s==='1'||s==='2') bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印入库单')">🖨 打印</button>`);
   document.getElementById('inboundEditBtns').innerHTML = bts.join('');
 }
 
@@ -725,12 +724,11 @@ function renderOutboundEdit(id){
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
   } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actOutboundAudit('${o.id}')">✨ 生效</button>`);
-    bts.push(`<button class="btn btn-danger" onclick="delOutbound('${o.id}')">🗑 删除</button>`);
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actOutboundUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actOutboundConfirm('${o.id}')">⬆ 出库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
   } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromOutbound('${o.id}')">↩ 生成退库单</button>`); }
-  if(!isNew) bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印出库单')">🖨 打印</button>`);
+  if(s==='1'||s==='2') bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印出库单')">🖨 打印</button>`);
   document.getElementById('outboundEditBtns').innerHTML = bts.join('');
 }
 
@@ -742,12 +740,11 @@ function renderReturnEditBtns(o){
   const bts=[];
   if(o.status==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actReturnAudit('${o.id}')">✨ 生效</button>`);
-    bts.push(`<button class="btn btn-danger" onclick="delReturn('${o.id}')">🗑 删除</button>`);
   } else if(o.status==='1'){ bts.push(`<button class="btn btn-warning" onclick="actReturnUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actReturnConfirm('${o.id}')">↩ 执行退库</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actReturnVoid('${o.id}')">作废</button>`);
-  } else if(o.status==='2'){ }
-  bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印</button>`);
+    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印</button>`);
+  } else if(o.status==='2'){ bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印退库单')">🖨 打印</button>`); }
   document.getElementById('returnEditBtns').innerHTML = bts.join('');
 }
 function openReturnAdd(presetRefType, presetRefId){
