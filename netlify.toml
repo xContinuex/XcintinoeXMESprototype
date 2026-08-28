@@ -1,0 +1,19 @@
+# Netlify 部署配置（静态站点）
+# 用途：将整个原型文件夹拖入 https://app.netlify.com/drop 或连接 Git 仓库后自动部署
+
+[build]
+  publish = "."
+  command = "echo '纯静态站点，无需构建'"
+
+# 正确的字符集响应头，保证中文文件名页面正常显示
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Type = "text/html; charset=utf-8"
+    X-Content-Type-Options = "nosniff"
+
+# 安全响应头
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"

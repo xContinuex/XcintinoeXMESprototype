@@ -1,0 +1,14 @@
+# GitHub Pages 配置
+# 纯静态站点，关闭 Jekyll 构建，避免 YAML/中文文件被 Jekyll 处理
+
+# 不启用 Jekyll（GitHub Pages 默认会尝试 Jekyll 构建）
+exclude:
+  - README.md
+
+# 保持原样输出，不做任何转换
+include:
+  - "*.html"
+
+# 站点基础配置
+title: 出入库单四态改造与退库 · 交互原型
+description: 仓库管理系统仓储模块交互原型（四态状态机 + 退库单）

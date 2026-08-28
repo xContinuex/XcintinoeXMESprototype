@@ -30,15 +30,43 @@
 | 生成退库单 | ❌ | ❌ | ✅ | ❌ |
 | 详情/打印 | ✅ | ✅ | ✅ | ✅ |
 
-## 如何打开
+## 文件说明
 
-直接双击 `出入库四态改造与退库-交互原型.html` 在浏览器打开即可（Tailwind CSS 通过 CDN 引入，需联网）。
-或启动本地静态服务器：
+| 文件 | 用途 |
+|---|---|
+| `index.html` | 入口页（原型完整副本），访问根目录即打开 |
+| `出入库四态改造与退库-交互原型.html` | 原型本体 |
+| `启动原型.bat` | Windows 一键启动本地预览服务（自动打开浏览器） |
+| `netlify.toml` | Netlify 静态部署配置 |
+| `vercel.json` | Vercel 部署配置 |
+| `_config.yml` | GitHub Pages 配置（关闭 Jekyll，保留纯 HTML） |
 
-```bash
-python -m http.server 8123
-# 访问 http://127.0.0.1:8123/出入库四态改造与退库-交互原型.html
+## 如何访问
+
+### 方式一：本地直接访问（最快）
+
+1. **双击** `启动原型.bat`，浏览器会自动打开 `http://127.0.0.1:8123/`
+2. 或直接双击 `index.html` 用浏览器打开（无服务器也可，仅 Tailwind CDN 需联网）
+
+### 方式二：局域网访问（同事在同一内网）
+
+在 `原型` 目录打开 PowerShell 执行：
+
+```powershell
+python -m http.server 8123 --bind 0.0.0.0
 ```
+
+然后同事访问 `http://你的内网IP:8123/`（用 `ipconfig` 查看 IP）。
+
+### 方式三：部署到在线平台
+
+| 平台 | 操作 |
+|---|---|
+| **Netlify** | 打开 https://app.netlify.com/drop ，把整个 `原型` 文件夹拖进去，自动生成 `xxx.netlify.app` 链接 |
+| **Vercel** | 导入该 Git 仓库（`vercel.json` 已就绪），自动部署 |
+| **GitHub Pages** | 推送后仓库 Settings → Pages → 选 master 分支（`_config.yml` 已就绪），访问 `https://用户名.github.io/仓库名/` |
+
+> 注：Gitee Pages 服务已下线（2024-07），无法通过 Gitee 部署在线页面。
 
 ## 技术说明
 
