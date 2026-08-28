@@ -122,6 +122,7 @@
   .tag-active  { color: var(--success); background: var(--success-bg); border-color: #c2e7b0; }
   .tag-done    { color: var(--primary); background: var(--primary-bg); border-color: #b3d8ff; }
   .tag-void    { color: var(--danger);  background: var(--danger-bg);  border-color: #fbc4c4; }
+  .tag-concession { color: var(--warning); background: var(--warning-bg); border-color: #f5dab1; }
 
   /* ===== Table ===== */
   .table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -459,8 +460,8 @@
               <div class="field"><label>批次号</label><input class="input" id="idQueryBatch" style="width:150px" placeholder="请输入"></div>
               <div class="field"><label>物料名称</label><input class="input" id="idQueryMat" style="width:140px" placeholder="请输入"></div>
               <div class="field"><label>检验结果</label>
-                <select class="select" id="idQueryInspect" style="width:110px">
-                  <option value="">全部</option><option>合格</option><option>不合格</option><option>待检</option>
+                <select class="select" id="idQueryInspect" style="width:120px">
+                  <option value="">全部</option><option>合格</option><option>让步接收</option>
                 </select>
               </div>
               <button class="btn btn-primary" onclick="renderInboundDetail()">查询</button>
@@ -487,8 +488,8 @@
               <div class="field"><label>批次号</label><input class="input" id="odQueryBatch" style="width:150px" placeholder="请输入"></div>
               <div class="field"><label>物料名称</label><input class="input" id="odQueryMat" style="width:140px" placeholder="请输入"></div>
               <div class="field"><label>检验结果</label>
-                <select class="select" id="odQueryInspect" style="width:110px">
-                  <option value="">全部</option><option>合格</option><option>不合格</option><option>待检</option>
+                <select class="select" id="odQueryInspect" style="width:120px">
+                  <option value="">全部</option><option>合格</option><option>让步接收</option>
                 </select>
               </div>
               <button class="btn btn-primary" onclick="renderOutboundDetail()">查询</button>
@@ -520,8 +521,8 @@
                 </select>
               </div>
               <div class="field"><label>检验结果</label>
-                <select class="select" id="rdQueryInspect" style="width:110px">
-                  <option value="">全部</option><option>合格</option><option>不合格</option><option>待检</option>
+                <select class="select" id="rdQueryInspect" style="width:120px">
+                  <option value="">全部</option><option>合格</option><option>让步接收</option>
                 </select>
               </div>
               <button class="btn btn-primary" onclick="renderReturnDetail()">查询</button>
@@ -679,10 +680,10 @@ let returnOrders = [
 let inboundDetailRows = [
   { inboundNo:'RK20260801001', batch:'P240711-001', matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', qty:5000, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-10', validity:'2027-08-10', loc:'成品仓/A区/货架1/库位01', inboundTime:'2026-08-10 14:20' },
   { inboundNo:'RK20260801002', batch:'P240712-008', matCode:'M1002', matName:'贴片电容', spec:'0805-100nF', qty:3000, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-12', validity:'2027-08-12', loc:'原料仓/B区/货架2/库位05', inboundTime:'2026-08-12 09:45' },
-  { inboundNo:'RK20260801003', batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', qty:1200, unit:'pcs', inspect:'待检', arrivalDate:'2026-08-15', validity:'2027-02-15', loc:'原料仓/A区/货架3/库位08', inboundTime:'2026-08-15 11:02' },
+  { inboundNo:'RK20260801003', batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', qty:1200, unit:'pcs', inspect:'让步接收', arrivalDate:'2026-08-15', validity:'2027-02-15', loc:'原料仓/A区/货架3/库位08', inboundTime:'2026-08-15 11:02' },
   { inboundNo:'RK20260801004', batch:'P240714-015', matCode:'M1004', matName:'晶振', spec:'32.768KHz', qty:800, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-18', validity:'2028-08-18', loc:'成品仓/B区/货架1/库位12', inboundTime:'2026-08-18 16:30' },
   { inboundNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', qty:2000, unit:'pcs', inspect:'合格', arrivalDate:'2026-08-20', validity:'2026-08-30', loc:'原料仓/A区/货架5/库位02', inboundTime:'2026-08-20 14:32' },
-  { inboundNo:'RK20260801005', batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', qty:1500, unit:'pcs', inspect:'不合格', arrivalDate:'2026-08-20', validity:'2026-08-25', loc:'原料仓/A区/货架5/库位03', inboundTime:'2026-08-20 14:32' },
+  { inboundNo:'RK20260801005', batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', qty:1500, unit:'pcs', inspect:'让步接收', arrivalDate:'2026-08-20', validity:'2026-08-25', loc:'原料仓/A区/货架5/库位03', inboundTime:'2026-08-20 14:32' },
 ];
 
 // ===== 出库明细 mock（warehouse_out_store_detail）=====
@@ -702,7 +703,7 @@ let returnDetailRows = [
     originalQty:600, returnedQty:0, returnQty:100, remark:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
   { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'合格',
     originalQty:200, returnedQty:0, returnQty:20, remark:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
-  { returnNo:'TK20260815001', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'待检',
+  { returnNo:'TK20260815001', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'让步接收',
     originalQty:2000, returnedQty:50, returnQty:30, remark:'错入多入', loc:'原料仓/A区/货架5/库位02', status:'0', returnTime:'' },
 ];
 
@@ -710,10 +711,10 @@ let returnDetailRows = [
 let inventoryRows = [
   { batch:'P240711-001', matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', loc:'成品仓/A区/货架1/库位01', qty:3800, locked:500, inspect:'合格', arrivalDate:'2026-08-10', validity:'2027-08-10' },
   { batch:'P240712-008', matCode:'M1002', matName:'贴片电容', spec:'0805-100nF', loc:'原料仓/B区/货架2/库位05', qty:3000, locked:0, inspect:'合格', arrivalDate:'2026-08-12', validity:'2027-08-12' },
-  { batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', loc:'原料仓/A区/货架3/库位08', qty:800, locked:200, inspect:'待检', arrivalDate:'2026-08-15', validity:'2027-02-15' },
+  { batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', loc:'原料仓/A区/货架3/库位08', qty:800, locked:200, inspect:'让步接收', arrivalDate:'2026-08-15', validity:'2027-02-15' },
   { batch:'P240714-015', matCode:'M1004', matName:'晶振', spec:'32.768KHz', loc:'成品仓/B区/货架1/库位12', qty:500, locked:0, inspect:'合格', arrivalDate:'2026-08-18', validity:'2028-08-18' },
   { batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', loc:'原料仓/A区/货架5/库位02', qty:1200, locked:300, inspect:'合格', arrivalDate:'2026-08-20', validity:'2026-08-30' },
-  { batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', loc:'原料仓/A区/货架5/库位03', qty:1500, locked:0, inspect:'不合格', arrivalDate:'2026-08-20', validity:'2026-08-25' },
+  { batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', loc:'原料仓/A区/货架5/库位03', qty:1500, locked:0, inspect:'让步接收', arrivalDate:'2026-08-20', validity:'2026-08-25' },
 ];
 
 // ===== 库存统计 mock（按物料聚合，参考 GROUP_CONCAT 仓库分布）=====
@@ -1125,7 +1126,7 @@ function renderInboundDetail(){
   document.getElementById('inboundDetailTableBody').innerHTML = rows.length? rows.map(r=>`
     <tr>
       <td><b>${r.inboundNo}</b></td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td><td>${r.spec}</td>
-      <td class="num">${r.qty}</td><td>${r.unit}</td><td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
+      <td class="num">${r.qty}</td><td>${r.unit}</td><td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':'<span class="tag tag-concession">让步接收</span>'}</td>
       <td>${r.arrivalDate}</td><td>${r.validity}</td><td>${r.loc}</td><td>${r.inboundTime}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="12">暂无数据</td></tr>`;
 }
@@ -1155,7 +1156,7 @@ function renderOutboundDetail(){
     <tr>
       <td><b>${r.outboundNo}</b></td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td><td>${r.spec}</td>
       <td class="num">${r.qty}</td><td>${r.unit}</td>
-      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
+      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':'<span class="tag tag-concession">让步接收</span>'}</td>
       <td>${r.warehouse}</td><td>${r.loc}</td><td>${r.outTime}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="11">暂无数据</td></tr>`;
 }
@@ -1192,7 +1193,7 @@ function renderReturnDetail(){
       <td class="num">${r.originalQty}</td><td class="num">${r.returnedQty}</td>
       <td class="num" style="font-weight:600;color:var(--danger)">${r.returnQty}</td>
       <td>${r.unit||'—'}</td>
-      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
+      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':'<span class="tag tag-concession">让步接收</span>'}</td>
       <td>${r.remark||'—'}</td><td>${r.loc}</td>
       <td>${r.returnTime||'—'}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="15">暂无数据</td></tr>`;
@@ -1238,7 +1239,7 @@ function renderInventory(){
       <td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td><td>${r.spec}</td><td>${r.loc}</td>
       <td class="num" style="font-weight:600">${r.qty}</td><td class="num" style="color:var(--warning)">${r.locked}</td>
       <td class="num" style="color:var(--success);font-weight:600">${avail}</td>
-      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':r.inspect==='不合格'?'<span class="tag tag-void">不合格</span>':'<span class="tag tag-await">待检</span>'}</td>
+      <td>${r.inspect==='合格'?'<span class="tag tag-active">合格</span>':'<span class="tag tag-concession">让步接收</span>'}</td>
       <td>${r.arrivalDate}</td><td>${r.validity}</td><td><span class="tag ${st.cls}">${st.text}</span></td>
     </tr>`;
   }).join('') : `<tr class="no-data"><td colspan="12">暂无数据</td></tr>`;
