@@ -216,6 +216,7 @@
     <div class="menu-title">明细查询</div>
     <div class="menu-item" data-nav="inboundDetail"><span class="icon">📋</span> 入库明细</div>
     <div class="menu-item" data-nav="outboundDetail"><span class="icon">📤</span> 出库明细</div>
+    <div class="menu-item" data-nav="returnDetail"><span class="icon">↩</span> 退库明细</div>
     <div class="menu-title">库存管理</div>
     <div class="menu-item" data-nav="inventory"><span class="icon">🏬</span> 库存明细</div>
     <div class="menu-item" data-nav="inventoryStats"><span class="icon">📊</span> 库存统计</div>
@@ -504,6 +505,40 @@
         </div>
       </div>
 
+      <!-- ===== 退库明细视图 ===== -->
+      <div class="view" id="view-returnDetail">
+        <div class="card">
+          <div class="card-head">退库明细 <span class="sub">（warehouse_return_detail 关联退库单查询）</span></div>
+          <div class="card-body">
+            <div class="toolbar mb-12">
+              <div class="field"><label>退库单号</label><input class="input" id="rdQueryNo" style="width:160px" placeholder="请输入"></div>
+              <div class="field"><label>批次号</label><input class="input" id="rdQueryBatch" style="width:150px" placeholder="请输入"></div>
+              <div class="field"><label>物料名称</label><input class="input" id="rdQueryMat" style="width:140px" placeholder="请输入"></div>
+              <div class="field"><label>来源类型</label>
+                <select class="select" id="rdQueryType" style="width:130px">
+                  <option value="">全部</option><option value="1">入库退库</option><option value="2">出库退库</option>
+                </select>
+              </div>
+              <div class="field"><label>退库原因</label>
+                <select class="select" id="rdQueryReason" style="width:130px">
+                  <option value="">全部</option><option>错入多入</option><option>品质不良</option><option>生产退料</option><option>客户退货</option><option>其他</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="renderReturnDetail()">查询</button>
+              <button class="btn btn-plain" onclick="resetReturnDetailQuery()">重置</button>
+            </div>
+            <table class="table">
+              <thead><tr>
+                <th>退库单号</th><th>来源类型</th><th>原单据号</th><th>批次号</th><th>物料编号</th><th>物料名称</th>
+                <th class="num">原单数量</th><th class="num">已退数量</th><th class="num">本次退库数量</th>
+                <th>退库原因</th><th>库位</th><th>状态</th><th>退库时间</th>
+              </tr></thead>
+              <tbody id="returnDetailTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== 库存明细视图 ===== -->
       <div class="view" id="view-inventory">
         <div class="card">
@@ -658,6 +693,18 @@ let outboundDetailRows = [
   { outboundNo:'CK20260810004', batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', qty:400, unit:'pcs', inspect:'合格', warehouse:'原料仓', loc:'原料仓/A区/货架3/库位08', outTime:'2026-08-25 10:05' },
   { outboundNo:'CK20260810003', batch:'P240714-015', matCode:'M1004', matName:'晶振', spec:'32.768KHz', qty:300, unit:'pcs', inspect:'合格', warehouse:'成品仓', loc:'成品仓/B区/货架1/库位12', outTime:'2026-08-24 15:12' },
   { outboundNo:'CK20260810002', batch:'P240711-001', matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', qty:1200, unit:'pcs', inspect:'合格', warehouse:'成品仓', loc:'成品仓/A区/货架1/库位01', outTime:'2026-08-23 09:20' },
+];
+
+// ===== 退库明细 mock（warehouse_return_detail）=====
+let returnDetailRows = [
+  { returnNo:'TK20260815003', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+    originalQty:2000, returnedQty:50, returnQty:50, reason:'客户退货', loc:'原料仓/A区/货架5/库位02', status:'2', returnTime:'2026-08-22 09:18' },
+  { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+    originalQty:600, returnedQty:0, returnQty:100, reason:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
+  { returnNo:'TK20260815002', refType:'2', refOrderNo:'CK20260810005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+    originalQty:200, returnedQty:0, returnQty:20, reason:'品质不良', loc:'成品仓/B区/货架2/库位11', status:'1', returnTime:'' },
+  { returnNo:'TK20260815001', refType:'1', refOrderNo:'RK20260801005', batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF',
+    originalQty:2000, returnedQty:50, returnQty:30, reason:'错入多入', loc:'原料仓/A区/货架5/库位02', status:'0', returnTime:'' },
 ];
 
 // ===== 库存明细 mock（warehouse_inventory_info）=====
@@ -842,13 +889,14 @@ function switchNav(nav){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+nav).classList.add('active');
   const crumb = {machine:'四态状态机', inbound:'入库单', outbound:'出库单', return:'退库单',
-    inboundDetail:'入库明细', outboundDetail:'出库明细', inventory:'库存明细', inventoryStats:'库存统计'}[nav];
+    inboundDetail:'入库明细', outboundDetail:'出库明细', returnDetail:'退库明细', inventory:'库存明细', inventoryStats:'库存统计'}[nav];
   document.getElementById('crumb').textContent = crumb;
   if(nav==='inbound') renderInboundList();
   if(nav==='outbound') renderOutboundList();
   if(nav==='return') renderReturnList();
   if(nav==='inboundDetail') renderInboundDetail();
   if(nav==='outboundDetail') renderOutboundDetail();
+  if(nav==='returnDetail') renderReturnDetail();
   if(nav==='inventory') renderInventory();
   if(nav==='inventoryStats') showStatsList();
 }
@@ -1055,6 +1103,7 @@ function renderAll(){
   if(currentNav==='return'&&document.getElementById('view-return').querySelector('.sub-view.active').id==='return-edit') renderReturnEditActive();
   if(currentNav==='inboundDetail') renderInboundDetail();
   if(currentNav==='outboundDetail') renderOutboundDetail();
+  if(currentNav==='returnDetail') renderReturnDetail();
   if(currentNav==='inventory') renderInventory();
   updateCounts();
 }
@@ -1116,6 +1165,44 @@ function resetOutboundDetailQuery(){
   ['odQueryNo','odQueryBatch','odQueryMat'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('odQueryInspect').value='';
   renderOutboundDetail();
+}
+
+/* =========================================================
+ * 退库明细（warehouse_return_detail）
+ * 参照技术方案 §4.1：明细表字段 original_quantity/returned_quantity/return_quantity/return_reason
+ * 支持筛选：退库单号、批次号、物料名称、来源类型、退库原因
+ * ========================================================= */
+function renderReturnDetail(){
+  const qNo = document.getElementById('rdQueryNo').value.trim();
+  const qBatch = document.getElementById('rdQueryBatch').value.trim();
+  const qMat = document.getElementById('rdQueryMat').value.trim();
+  const qType = document.getElementById('rdQueryType').value;
+  const qReason = document.getElementById('rdQueryReason').value;
+  let rows = returnDetailRows.filter(r=>{
+    if(qNo && !r.returnNo.includes(qNo)) return false;
+    if(qBatch && !r.batch.includes(qBatch)) return false;
+    if(qMat && !r.matName.includes(qMat) && !r.matCode.includes(qMat)) return false;
+    if(qType && r.refType!==qType) return false;
+    if(qReason && r.reason!==qReason) return false;
+    return true;
+  });
+  document.getElementById('returnDetailTableBody').innerHTML = rows.length? rows.map(r=>`
+    <tr>
+      <td><b>${r.returnNo}</b></td>
+      <td>${r.refType==='1'?'<span class="tag tag-draft">入库退库</span>':'<span class="tag tag-await">出库退库</span>'}</td>
+      <td>${r.refOrderNo}</td><td>${r.batch}</td><td>${r.matCode}</td><td>${r.matName}</td>
+      <td class="num">${r.originalQty}</td><td class="num">${r.returnedQty}</td>
+      <td class="num" style="font-weight:600;color:var(--danger)">${r.returnQty}</td>
+      <td>${r.reason}</td><td>${r.loc}</td>
+      <td>${tag(r.status)}</td>
+      <td>${r.returnTime||'—'}</td>
+    </tr>`).join('') : `<tr class="no-data"><td colspan="13">暂无数据</td></tr>`;
+}
+function resetReturnDetailQuery(){
+  ['rdQueryNo','rdQueryBatch','rdQueryMat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rdQueryType').value='';
+  document.getElementById('rdQueryReason').value='';
+  renderReturnDetail();
 }
 
 /* =========================================================
@@ -1262,7 +1349,7 @@ document.getElementById('confirmMask').addEventListener('click',e=>{ if(e.target
 
 /* ---------- 初始化 ---------- */
 renderMatrix(); updateCounts(); renderInboundList(); renderOutboundList(); renderReturnList();
-renderInboundDetail(); renderOutboundDetail(); renderInventory(); renderInventoryStats();
+renderInboundDetail(); renderOutboundDetail(); renderReturnDetail(); renderInventory(); renderInventoryStats();
 </script>
 </body>
 </html>
