@@ -311,8 +311,15 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-head">入库记录 <span class="sub">（明细）</span></div>
+            <div class="card-head">入库记录 <span class="sub">（扫描批次号添加）</span></div>
             <div class="card-body">
+              <div class="toolbar mb-12" id="inboundScanBar">
+                <div class="field"><label>📡 扫描批次号</label>
+                  <input class="input" id="inboundScanInput" style="width:220px" placeholder="扫描或输入批次号后回车" onkeydown="if(event.key==='Enter')scanBatchAdd('inbound')">
+                </div>
+                <button class="btn btn-primary" onclick="scanBatchAdd('inbound')">➕ 添加</button>
+                <span class="hint">扫描批次号自动带出物料信息</span>
+              </div>
               <table class="table">
                 <thead><tr>
                   <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th class="num">数量</th><th>单位</th>
@@ -367,12 +374,19 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-head">出库明细</div>
+            <div class="card-head">出库明细 <span class="sub">（扫描批次号添加）</span></div>
             <div class="card-body">
+              <div class="toolbar mb-12" id="outboundScanBar">
+                <div class="field"><label>📡 扫描批次号</label>
+                  <input class="input" id="outboundScanInput" style="width:220px" placeholder="扫描或输入批次号后回车" onkeydown="if(event.key==='Enter')scanBatchAdd('outbound')">
+                </div>
+                <button class="btn btn-primary" onclick="scanBatchAdd('outbound')">➕ 添加</button>
+                <span class="hint">扫描批次号自动带出物料信息</span>
+              </div>
               <table class="table">
                 <thead><tr>
-                  <th>物料编号</th><th>物料名称</th><th>规格</th><th class="num">数量</th><th>单位</th>
-                  <th>仓库位置</th><th class="num">已退数量</th><th id="outboundDetailOpsHead"></th>
+                  <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th class="num">数量</th><th>单位</th>
+                  <th>检验结果</th><th>仓库位置</th><th class="num">已退数量</th><th id="outboundDetailOpsHead"></th>
                 </tr></thead>
                 <tbody id="outboundDetailBody"></tbody>
               </table>
@@ -438,10 +452,17 @@
           <div class="card">
             <div class="card-head">退库明细 <span class="sub" id="returnDetailTip"></span></div>
             <div class="card-body">
+              <div class="toolbar mb-12" id="returnScanBar">
+                <div class="field"><label>📡 扫描批次号</label>
+                  <input class="input" id="returnScanInput" style="width:220px" placeholder="扫描或输入批次号后回车" onkeydown="if(event.key==='Enter')scanBatchAdd('return')">
+                </div>
+                <button class="btn btn-primary" onclick="scanBatchAdd('return')">➕ 添加</button>
+                <span class="hint">扫描批次号自动带出物料信息</span>
+              </div>
               <table class="table">
                 <thead><tr>
-                  <th>批次号</th><th>物料编号</th><th>物料名称</th><th class="num">原单数量</th><th class="num">已退数量</th>
-                  <th class="num">可退数量</th><th class="num" id="returnQtyHead">本次退库数量</th><th>备注</th>
+                  <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th>单位</th><th class="num">原单数量</th><th class="num">已退数量</th>
+                  <th class="num">可退数量</th><th class="num" id="returnQtyHead">本次退库数量</th><th>备注</th><th id="returnDetailOpsHead"></th>
                 </tr></thead>
                 <tbody id="returnDetailBody"></tbody>
               </table>
@@ -717,6 +738,22 @@ let inventoryRows = [
   { batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', loc:'原料仓/A区/货架5/库位03', qty:1500, locked:0, inspect:'让步接收', arrivalDate:'2026-08-20', validity:'2026-08-25' },
 ];
 
+// ===== 批次库 mock（扫码带出物料信息）=====
+let batchLib = [
+  { batch:'P240711-001', matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', unit:'pcs', inspect:'合格', arrival:'采购到货', loc:'成品仓/A区/货架1/库位01', stock:3800 },
+  { batch:'P240712-008', matCode:'M1002', matName:'贴片电容', spec:'0805-100nF', unit:'pcs', inspect:'合格', arrival:'采购到货', loc:'原料仓/B区/货架2/库位05', stock:3000 },
+  { batch:'P240713-021', matCode:'M1003', matName:'连接器', spec:'PH2.0-4P', unit:'pcs', inspect:'让步接收', arrival:'换货到货', loc:'原料仓/A区/货架3/库位08', stock:800 },
+  { batch:'P240714-015', matCode:'M1004', matName:'晶振', spec:'32.768KHz', unit:'pcs', inspect:'合格', arrival:'采购到货', loc:'成品仓/B区/货架1/库位12', stock:500 },
+  { batch:'P240715-033', matCode:'M1005', matName:'钽电容', spec:'C型-47uF', unit:'pcs', inspect:'合格', arrival:'采购到货', loc:'原料仓/A区/货架5/库位02', stock:1200 },
+  { batch:'P240715-034', matCode:'M1006', matName:'二极管', spec:'SOD-123', unit:'pcs', inspect:'让步接收', arrival:'采购到货', loc:'原料仓/A区/货架5/库位03', stock:1500 },
+  { batch:'P240716-010', matCode:'M2001', matName:'PCB主板', spec:'TL-MB-01', unit:'块', inspect:'合格', arrival:'生产入库', loc:'成品仓/A区/货架2/库位03', stock:0 },
+  { batch:'P240716-011', matCode:'M2002', matName:'散热片', spec:'AL-40mm', unit:'个', inspect:'合格', arrival:'生产入库', loc:'原料仓/B区/货架4/库位01', stock:0 },
+  { batch:'P240716-012', matCode:'M2003', matName:'外壳', spec:'ABS-白色', unit:'个', inspect:'合格', arrival:'生产入库', loc:'成品仓/A区/货架1/库位06', stock:0 },
+  { batch:'P240716-013', matCode:'M2004', matName:'排线', spec:'FPC-12P', unit:'根', inspect:'合格', arrival:'生产入库', loc:'原料仓/A区/货架3/库位09', stock:0 },
+  { batch:'P240716-014', matCode:'M2005', matName:'电池组', spec:'3.7V-2200mAh', unit:'组', inspect:'合格', arrival:'生产入库', loc:'成品仓/B区/货架2/库位11', stock:0 },
+  { batch:'P240716-015', matCode:'M2006', matName:'螺丝包', spec:'M2*5-100粒', unit:'包', inspect:'合格', arrival:'生产入库', loc:'原料仓/A区/货架4/库位02', stock:0 },
+];
+
 // ===== 库存统计 mock（按物料聚合，参考 GROUP_CONCAT 仓库分布）=====
 let inventoryStatsRows = [
   { matCode:'M1001', matName:'贴片电阻', spec:'0603-10KΩ', totalQty:3800, totalLocked:500, warehouses:'成品仓/A区', inventoryMin:2000, inventoryMax:10000 },
@@ -906,8 +943,9 @@ document.querySelectorAll('.menu-item[data-nav]').forEach(m=>{
 
 /* ---------- 入库单编辑 ---------- */
 let editingInboundId = null;
-function openInboundAdd(){ editingInboundId = null; showSub('inbound','inbound-edit'); renderInboundEdit(null); }
-function openInboundEdit(id){ editingInboundId = id; showSub('inbound','inbound-edit'); renderInboundEdit(id); }
+let inboundEditDetails = [];   // 当前编辑入库单的明细（草稿可动态添加）
+function openInboundAdd(){ editingInboundId = null; inboundEditDetails = []; showSub('inbound','inbound-edit'); renderInboundEdit(null); }
+function openInboundEdit(id){ editingInboundId = id; inboundEditDetails = (inboundDetails[id]||[]).map(d=>({...d})); showSub('inbound','inbound-edit'); renderInboundEdit(id); }
 function backInbound(){ showSub('inbound','inbound-list'); renderInboundList(); }
 function showSub(parent, sub){
   const pv = document.getElementById('view-'+parent);
@@ -927,16 +965,20 @@ function renderInboundEdit(id){
     <div class="form-item"><label>操作人</label><input class="input" value="${o.operator}" disabled></div>
     <div class="form-item" style="grid-column:span 2"><label>外部编号</label><input class="input" value="${o.externalCode}" ${readonly?'disabled':''} placeholder="选填"></div>
     <div class="form-item" style="grid-column:span 2"><label>备注</label><input class="input" value="${o.remark}" ${readonly?'disabled':''}></div>`;
+  // 扫描区显隐：仅草稿/新增可扫描
+  document.getElementById('inboundScanBar').style.display = (isNew || s==='0') ? 'flex' : 'none';
   // 明细
-  const dets = isNew? [] : (inboundDetails[id]||[]);
-  document.getElementById('inboundDetailOpsHead').innerHTML = (s==='0'&&!isNew)? '<th>操作</th>':'';
-  document.getElementById('inboundDetailBody').innerHTML = dets.length? dets.map(d=>`
+  const dets = inboundEditDetails;
+  const editable = (isNew || s==='0');
+  document.getElementById('inboundDetailOpsHead').innerHTML = editable? '<th>操作</th>':'';
+  document.getElementById('inboundDetailBody').innerHTML = dets.length? dets.map((d,i)=>`
     <tr>
       <td>${d.batch}</td><td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec}</td>
-      <td class="num">${d.qty}</td><td>${d.unit}</td><td>${d.inspect}</td><td>${d.arrival}</td>
+      ${editable?`<td class="num"><input class="input" style="width:80px;text-align:right" type="number" min="0" value="${d.qty}" onchange="editDetailQty('inbound',${i},this.value)"></td>`:`<td class="num">${d.qty}</td>`}
+      <td>${d.unit}</td><td>${inspectTag(d.inspect)}</td><td>${d.arrival||'—'}</td>
       <td>${d.loc||'未分配'}</td><td class="num">${d.returned||0}</td>
-      ${(s==='0'&&!isNew)?`<td><button class="btn-link">拆分</button><button class="btn-link danger" onclick="toastInfo('原型演示：删除明细')">删除</button></td>`:''}
-    </tr>`).join('') : `<tr class="no-data"><td colspan="${(s==='0'&&!isNew)?11:10}">${isNew?'新增模式：此处展示待入库物料明细':'暂无明细'}</td></tr>`;
+      ${editable?`<td><button class="btn-link danger" onclick="removeDetail('inbound',${i})">删除</button></td>`:''}
+    </tr>`).join('') : `<tr class="no-data"><td colspan="${editable?11:10}">${isNew?'请扫描批次号添加明细':'暂无明细'}</td></tr>`;
   // 顶部按钮
   const bts = [];
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
@@ -953,8 +995,9 @@ function renderInboundEdit(id){
 
 /* ---------- 出库单编辑 ---------- */
 let editingOutboundId = null;
-function openOutboundAdd(){ editingOutboundId=null; showSub('outbound','outbound-edit'); renderOutboundEdit(null); }
-function openOutboundEdit(id){ editingOutboundId=id; showSub('outbound','outbound-edit'); renderOutboundEdit(id); }
+let outboundEditDetails = [];  // 当前编辑出库单的明细（草稿可动态添加）
+function openOutboundAdd(){ editingOutboundId=null; outboundEditDetails=[]; showSub('outbound','outbound-edit'); renderOutboundEdit(null); }
+function openOutboundEdit(id){ editingOutboundId=id; outboundEditDetails=(outboundDetails[id]||[]).map(d=>({...d})); showSub('outbound','outbound-edit'); renderOutboundEdit(id); }
 function backOutbound(){ showSub('outbound','outbound-list'); renderOutboundList(); }
 function renderOutboundEdit(id){
   const isNew = !id;
@@ -973,14 +1016,18 @@ function renderOutboundEdit(id){
     <div class="form-item"><label>操作人</label><input class="input" value="张仓管" disabled></div>
     <div class="form-item" style="grid-column:span 2"><label>收货地址</label><input class="input" value="广东省深圳市宝安区科技园" ${readonly?'disabled':''}></div>
     <div class="form-item" style="grid-column:span 2"><label>备注</label><input class="input" value="${o.remark}" ${readonly?'disabled':''}></div>`;
-  const dets = isNew? [] : (outboundDetails[id]||[]);
-  document.getElementById('outboundDetailOpsHead').innerHTML = (s==='0'&&!isNew)? '<th>操作</th>':'';
-  document.getElementById('outboundDetailBody').innerHTML = dets.length? dets.map(d=>`
+  // 扫描区显隐：仅草稿/新增可扫描
+  document.getElementById('outboundScanBar').style.display = (isNew || s==='0') ? 'flex' : 'none';
+  const dets = outboundEditDetails;
+  const editable = (isNew || s==='0');
+  document.getElementById('outboundDetailOpsHead').innerHTML = editable? '<th>操作</th>':'';
+  document.getElementById('outboundDetailBody').innerHTML = dets.length? dets.map((d,i)=>`
     <tr>
-      <td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec}</td><td class="num">${d.qty}</td><td>${d.unit}</td>
-      <td>${d.loc||'未分配'}</td><td class="num">${d.returned||0}</td>
-      ${(s==='0'&&!isNew)?`<td><button class="btn-link danger" onclick="toastInfo('原型演示：删除明细')">删除</button></td>`:''}
-    </tr>`).join('') : `<tr class="no-data"><td colspan="${(s==='0'&&!isNew)?8:7}">${isNew?'新增模式：此处展示出库明细':'暂无明细'}</td></tr>`;
+      <td>${d.batch}</td><td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec}</td>
+      ${editable?`<td class="num"><input class="input" style="width:80px;text-align:right" type="number" min="0" value="${d.qty}" onchange="editDetailQty('outbound',${i},this.value)"></td>`:`<td class="num">${d.qty}</td>`}
+      <td>${d.unit}</td><td>${inspectTag(d.inspect)}</td><td>${d.loc||'未分配'}</td><td class="num">${d.returned||0}</td>
+      ${editable?`<td><button class="btn-link danger" onclick="removeDetail('outbound',${i})">删除</button></td>`:''}
+    </tr>`).join('') : `<tr class="no-data"><td colspan="${editable?10:9}">${isNew?'请扫描批次号添加明细':'暂无明细'}</td></tr>`;
   const bts=[];
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
   } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
@@ -998,6 +1045,7 @@ function renderOutboundEdit(id){
 let editingReturnId = null;
 let returnNewRefType = '1';
 let returnNewRefId = '';
+let returnEditDetails = [];   // 当前编辑退库单的明细（选择原单带出 + 扫描添加）
 function renderReturnEditBtns(o){
   const bts=[];
   if(o.status==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`);
@@ -1015,7 +1063,8 @@ function openReturnAdd(presetRefType, presetRefId){
   returnNewRefType = rt; returnNewRefId = presetRefId || '';
   document.getElementById('returnRefType').value = rt;
   document.getElementById('returnRemark').value='';
-  // 新增模式按钮：仅保留【保存】【生效】
+  returnEditDetails = [];
+  // 新增模式按钮：仅保留【保存】
   document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`;
   renderReturnRefOrders(presetRefId); }
 function openReturnEdit(id){ editingReturnId=id; showSub('return','return-edit');
@@ -1023,6 +1072,7 @@ function openReturnEdit(id){ editingReturnId=id; showSub('return','return-edit')
   document.getElementById('returnEditTitle').textContent = '退库单详情 '+o.no;
   document.getElementById('returnRefType').value = o.refType;
   document.getElementById('returnRemark').value = o.remark||'';
+  returnEditDetails = [];
   renderReturnRefOrders(o);
   renderReturnEditBtns(o); }
 function backReturn(){ showSub('return','return-list'); renderReturnList(); }
@@ -1044,18 +1094,87 @@ function loadReturnDetail(refId, preset){
   const src = rt==='1'? inboundDetails[refId] : outboundDetails[refId];
   const refOrder = (rt==='1'?inboundOrders:outboundOrders).find(o=>o.id===refId);
   if(!src||!src.length){ clearReturnDetail('原单无明细或不可退'); return; }
+  // 从原单带出明细（含原单数量/已退/可退），扫描添加的明细保留
+  const origin = src.map(d=>({
+    batch:d.batch, matCode:d.matCode, matName:d.matName, spec:d.spec||'', unit:d.unit||'',
+    originalQty:d.qty, returnedQty:d.returned||0, returnQty:0, remark:'', fromOrder:true
+  }));
+  returnEditDetails = origin;
   document.getElementById('returnDetailTip').innerHTML = `原单 ${refOrder.no} · 可退数量 = 原单数量 − 已退数量`;
-  document.getElementById('returnDetailBody').innerHTML = src.map(d=>{
-    const avail = Math.max(0,(d.qty||0)-(d.returned||0));
-    return `<tr>
-      <td>${d.batch||'—'}</td><td>${d.matCode}</td><td>${d.matName}</td>
-      <td class="num">${d.qty}</td><td class="num">${d.returned||0}</td><td class="num" style="color:var(--primary);font-weight:600">${avail}</td>
-      <td class="num"><input class="input" style="width:90px;text-align:right" type="number" min="0" max="${avail}" value="0"></td>
-      <td><input class="input" style="width:130px" placeholder="请输入备注"></td>
-    </tr>`;
-  }).join('');
+  renderReturnDetailTable();
 }
-function clearReturnDetail(tip){ document.getElementById('returnDetailTip').innerHTML = tip||''; document.getElementById('returnDetailBody').innerHTML = `<tr class="no-data"><td colspan="8">${tip||'请选择原单'}</td></tr>`; }
+function renderReturnDetailTable(){
+  const editable = (editingReturnId===null);
+  const isNewMode = editingReturnId===null;
+  // 扫描区显隐：新增模式可扫描；编辑详情只读
+  document.getElementById('returnScanBar').style.display = editable ? 'flex' : 'none';
+  document.getElementById('returnDetailBody').innerHTML = returnEditDetails.length? returnEditDetails.map((d,i)=>{
+    const avail = d.fromOrder ? Math.max(0,(d.originalQty||0)-(d.returnedQty||0)) : (d.stock||0);
+    return `<tr>
+      <td>${d.batch||'—'}</td><td>${d.matCode}</td><td>${d.matName}</td><td>${d.spec||'—'}</td><td>${d.unit||'—'}</td>
+      <td class="num">${d.originalQty||'—'}</td><td class="num">${d.returnedQty||0}</td>
+      <td class="num" style="color:var(--primary);font-weight:600">${avail}</td>
+      ${editable
+        ?`<td class="num"><input class="input" style="width:80px;text-align:right" type="number" min="0" max="${avail}" value="${d.returnQty||0}" onchange="editDetailQty('return',${i},this.value)"></td>
+          <td><input class="input" style="width:110px" placeholder="请输入备注" value="${d.remark||''}" onchange="editDetailRemark(${i},this.value)"></td>`
+        :`<td class="num">${d.returnQty||0}</td><td>${d.remark||'—'}</td>`}
+      ${editable?`<td><button class="btn-link danger" onclick="removeDetail('return',${i})">删除</button></td>`:''}
+    </tr>`;
+  }).join('') : `<tr class="no-data"><td colspan="11">${isNewMode?'请选择原单或扫描批次号添加明细':'暂无明细'}</td></tr>`;
+}
+function clearReturnDetail(tip){ document.getElementById('returnDetailTip').innerHTML = tip||''; returnEditDetails=[]; document.getElementById('returnDetailBody').innerHTML = `<tr class="no-data"><td colspan="11">${tip||'请选择原单'}</td></tr>`; }
+
+/* =========================================================
+ * 扫描批次号添加明细（入库/出库/退库 统一）
+ * 扫批次号 → 批次库带出物料 → 加入当前编辑明细
+ * ========================================================= */
+function inspectTag(inspect){
+  return inspect==='合格' ? '<span class="tag tag-active">合格</span>' : '<span class="tag tag-concession">让步接收</span>';
+}
+function scanBatchAdd(kind){
+  const inputId = {inbound:'inboundScanInput', outbound:'outboundScanInput', return:'returnScanInput'}[kind];
+  const input = document.getElementById(inputId);
+  const code = (input.value||'').trim();
+  if(!code){ toast('请先扫描批次号','warning'); return; }
+  const lib = batchLib.find(b=>b.batch===code);
+  if(!lib){ toast('未找到该批次号：'+code,'danger'); input.value=''; return; }
+  // 获取目标明细数组
+  let arr;
+  if(kind==='inbound') arr = inboundEditDetails;
+  else if(kind==='outbound') arr = outboundEditDetails;
+  else arr = returnEditDetails;
+  // 防重复
+  if(arr.some(d=>d.batch===code)){ toast('该批次已添加：'+code,'warning'); input.value=''; return; }
+  if(kind==='return'){
+    // 退库单：从批次库带出（原单数量=当前库存，可退=当前库存）
+    arr.push({ batch:lib.batch, matCode:lib.matCode, matName:lib.matName, spec:lib.spec, unit:lib.unit,
+      originalQty:lib.stock||0, returnedQty:0, returnQty:0, remark:'', stock:lib.stock||0, fromOrder:false });
+  } else {
+    arr.push({ batch:lib.batch, matCode:lib.matCode, matName:lib.matName, spec:lib.spec, unit:lib.unit,
+      inspect:lib.inspect, arrival:lib.arrival, loc:lib.loc, qty:0, returned:0 });
+  }
+  input.value='';
+  toast('已添加：'+lib.matName+'（'+code+'）','success');
+  // 重渲染当前编辑页
+  if(kind==='inbound') renderInboundEdit(editingInboundId);
+  else if(kind==='outbound') renderOutboundEdit(editingOutboundId);
+  else renderReturnDetailTable();
+}
+function editDetailQty(kind, idx, val){
+  const arr = kind==='inbound'? inboundEditDetails : kind==='outbound'? outboundEditDetails : returnEditDetails;
+  if(arr[idx]) arr[idx].qty = Number(val)||0;
+}
+function editDetailRemark(idx, val){
+  if(returnEditDetails[idx]) returnEditDetails[idx].remark = val;
+}
+function removeDetail(kind, idx){
+  const arr = kind==='inbound'? inboundEditDetails : kind==='outbound'? outboundEditDetails : returnEditDetails;
+  arr.splice(idx,1);
+  if(kind==='inbound') renderInboundEdit(editingInboundId);
+  else if(kind==='outbound') renderOutboundEdit(editingOutboundId);
+  else renderReturnDetailTable();
+  toast('已删除明细','warning');
+}
 
 /* ---------- 状态机动作（入库单） ---------- */
 function actInboundAudit(id){ askConfirm('是否确认<生效>入库单？', ()=>{ const o=findI(id); o.status='1'; toast('入库单已生效','success'); renderAll(); }); }
@@ -1327,7 +1446,9 @@ function renderReturnEditActive(){
     // 新增模式：保留预设类型与原单，按钮仅保留【保存】
     document.getElementById('returnRefType').value = returnNewRefType;
     document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`;
-    renderReturnRefOrders(returnNewRefId || null);
+    // 若已通过扫描/带出添加过明细，直接重渲染表格，避免覆盖用户录入
+    if(returnEditDetails.length){ renderReturnDetailTable(); }
+    else { renderReturnRefOrders(returnNewRefId || null); }
   }
 }
 function updateCounts(){
