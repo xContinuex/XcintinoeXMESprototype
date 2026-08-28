@@ -535,7 +535,7 @@ function rowBtns(order, type){
   if(type==='inbound'){
     if(s==='0'){ btns.push(B('编辑','',`openInboundEdit`, 'warehouse:inboundOrder:edit'));
       btns.push(B('生效','success',`actInboundAudit`, 'warehouse:inboundOrder:audit'));
-      btns.push(B('作废','danger',`actInboundVoid`, 'warehouse:inboundOrder:void'));
+      btns.push(B('删除','danger',`delInbound`, 'warehouse:inboundOrder:remove'));
     } else if(s==='1'){ btns.push(B('详情','',`openInboundEdit`, 'warehouse:inboundOrder:query'));
       btns.push(B('反生效','warning',`actInboundUnAudit`, 'warehouse:inboundOrder:unAudit'));
       btns.push(B('入库执行','success',`actInboundStore`, 'warehouse:inboundOrder:store'));
@@ -548,7 +548,7 @@ function rowBtns(order, type){
   } else if(type==='outbound'){
     if(s==='0'){ btns.push(B('编辑','',`openOutboundEdit`, 'warehouse:outStoreOrder:edit'));
       btns.push(B('生效','success',`actOutboundAudit`, 'warehouse:outStoreOrder:audit'));
-      btns.push(B('作废','danger',`actOutboundVoid`, 'warehouse:outStoreOrder:void'));
+      btns.push(B('删除','danger',`delOutbound`, 'warehouse:outStoreOrder:remove'));
     } else if(s==='1'){ btns.push(B('详情','',`openOutboundEdit`, 'warehouse:outStoreOrder:query'));
       btns.push(B('反生效','warning',`actOutboundUnAudit`, 'warehouse:outStoreOrder:unAudit'));
       btns.push(B('出库执行','success',`actOutboundConfirm`, 'warehouse:outStoreOrder:confirm'));
@@ -617,7 +617,7 @@ function renderReturnList(){
 function returnRowBtns(o){
   const s = o.status; const btns=[];
   const B=(t,c,f)=>`<button class="btn-link ${c}" onclick="${f}('${o.id}')">${t}</button>`;
-  if(s==='0'){ btns.push(B('编辑','',`openReturnEdit`)); btns.push(B('生效','success',`actReturnAudit`)); btns.push(B('作废','danger',`actReturnVoid`)); }
+  if(s==='0'){ btns.push(B('编辑','',`openReturnEdit`)); btns.push(B('生效','success',`actReturnAudit`)); btns.push(B('删除','danger',`delReturn`)); }
   else if(s==='1'){ btns.push(B('反生效','warning',`actReturnUnAudit`)); btns.push(B('执行退库','success',`actReturnConfirm`)); btns.push(B('作废','danger',`actReturnVoid`)); }
   else if(s==='2'){ btns.push(B('详情','',`openReturnEdit`)); }
   btns.push(B('打印','info',`printReturn`));
@@ -682,7 +682,7 @@ function renderInboundEdit(id){
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
   } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actInboundAudit('${o.id}')">✨ 生效</button>`);
-    bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="delInbound('${o.id}')">🗑 删除</button>`);
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actInboundUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actInboundStore('${o.id}')">⬇ 入库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
@@ -725,7 +725,7 @@ function renderOutboundEdit(id){
   if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
   } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actOutboundAudit('${o.id}')">✨ 生效</button>`);
-    bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="delOutbound('${o.id}')">🗑 删除</button>`);
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actOutboundUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actOutboundConfirm('${o.id}')">⬆ 出库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
@@ -742,7 +742,7 @@ function renderReturnEditBtns(o){
   const bts=[];
   if(o.status==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actReturnAudit('${o.id}')">✨ 生效</button>`);
-    bts.push(`<button class="btn btn-danger" onclick="actReturnVoid('${o.id}')">作废</button>`);
+    bts.push(`<button class="btn btn-danger" onclick="delReturn('${o.id}')">🗑 删除</button>`);
   } else if(o.status==='1'){ bts.push(`<button class="btn btn-warning" onclick="actReturnUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actReturnConfirm('${o.id}')">↩ 执行退库</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actReturnVoid('${o.id}')">作废</button>`);
@@ -797,7 +797,8 @@ function clearReturnDetail(tip){ document.getElementById('returnDetailTip').inne
 function actInboundAudit(id){ askConfirm('是否确认<生效>入库单？', ()=>{ const o=findI(id); o.status='1'; toast('入库单已生效','success'); renderAll(); }); }
 function actInboundUnAudit(id){ askConfirm('反生效后将回到草稿可编辑，是否继续？', ()=>{ const o=findI(id); o.status='0'; toast('已反生效，回到草稿','warning'); renderAll(); }); }
 function actInboundStore(id){ askConfirm('确认入库执行？将占用库存并推ERP。', ()=>{ const o=findI(id); o.status='2'; o.warehousingTime=now(); toast('入库完成，状态→已完成','success'); renderAll(); }); }
-function actInboundVoid(id){ askConfirm('确认作废该入库单？将逻辑作废并保留明细。', ()=>{ const o=findI(id); if(o.status==='2'){toast('已完成单据不可作废，请走退库单','danger');return;} o.status='9'; toast('已作废','success'); renderAll(); }); }
+function actInboundVoid(id){ askConfirm('确认作废该入库单？将逻辑作废并保留明细。', ()=>{ const o=findI(id); if(!o||o.status==='2'){toast('已完成单据不可作废，请走退库单','danger');return;} o.status='9'; toast('已作废','success'); renderAll(); }); }
+function delInbound(id){ askConfirm('确认删除该入库单？删除后不可恢复。', ()=>{ const idx=inboundOrders.findIndex(x=>x.id===id); if(idx>-1){ inboundOrders.splice(idx,1); toast('删除成功','success'); renderAll(); if(editingInboundId===id) backInbound(); } }); }
 function findI(id){ return inboundOrders.find(x=>x.id===id); }
 
 /* ---------- 状态机动作（出库单） ---------- */
@@ -805,6 +806,7 @@ function actOutboundAudit(id){ askConfirm('是否确认<生效>出库单？', ()
 function actOutboundUnAudit(id){ askConfirm('反生效后将回到草稿可编辑，是否继续？', ()=>{ const o=findO(id); o.status='0'; toast('已反生效，回到草稿','warning'); renderAll(); }); }
 function actOutboundConfirm(id){ askConfirm('确认出库执行？将扣库存并推ERP。', ()=>{ const o=findO(id); o.status='2'; o.outTime=now(); toast('出库完成，状态→已完成','success'); renderAll(); }); }
 function actOutboundVoid(id){ askConfirm('确认作废该出库单？', ()=>{ const o=findO(id); o.status='9'; toast('已作废','success'); renderAll(); }); }
+function delOutbound(id){ askConfirm('确认删除该出库单？删除后不可恢复。', ()=>{ const idx=outboundOrders.findIndex(x=>x.id===id); if(idx>-1){ outboundOrders.splice(idx,1); toast('删除成功','success'); renderAll(); if(editingOutboundId===id) backOutbound(); } }); }
 function findO(id){ return outboundOrders.find(x=>x.id===id); }
 
 /* ---------- 状态机动作（退库单） ---------- */
@@ -812,6 +814,7 @@ function actReturnAudit(id){ askConfirm('是否确认<生效>退库单？', ()=>
 function actReturnUnAudit(id){ askConfirm('反生效后将回到草稿，是否继续？', ()=>{ const o=findR(id); o.status='0'; toast('已反生效，回到草稿','warning'); renderAll(); }); }
 function actReturnConfirm(id){ askConfirm('确认执行退库？将冲销库存并推红字ERP。', ()=>{ const o=findR(id); o.status='2'; o.returnTime=now(); o.totalQty=120; toast('退库完成，原单状态不变','success'); renderAll(); }); }
 function actReturnVoid(id){ askConfirm('确认作废该退库单？', ()=>{ const o=findR(id); o.status='9'; toast('已作废','success'); renderAll(); }); }
+function delReturn(id){ askConfirm('确认删除该退库单？删除后不可恢复。', ()=>{ const idx=returnOrders.findIndex(x=>x.id===id); if(idx>-1){ returnOrders.splice(idx,1); toast('删除成功','success'); renderAll(); if(editingReturnId===id) backReturn(); } }); }
 function findR(id){ return returnOrders.find(x=>x.id===id); }
 
 /* ---------- 生成退库单 ---------- */
