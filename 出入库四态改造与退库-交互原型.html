@@ -759,7 +759,7 @@ function openReturnAdd(presetRefType, presetRefId){
   document.getElementById('returnRefType').value = rt;
   document.getElementById('returnRemark').value='';
   // 新增模式按钮：仅保留【保存】【生效】
-  document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button><button class="btn btn-success" onclick="toastInfo('原型演示：生效退库单')">✨ 生效</button>`;
+  document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`;
   renderReturnRefOrders(presetRefId); }
 function openReturnEdit(id){ editingReturnId=id; showSub('return','return-edit');
   const o = returnOrders.find(x=>x.id===id);
@@ -848,9 +848,9 @@ function renderAll(){
 function renderReturnEditActive(){
   if(editingReturnId){ openReturnEdit(editingReturnId); }
   else {
-    // 新增模式：保留预设类型与原单，按钮仅保留【保存】【生效】
+    // 新增模式：保留预设类型与原单，按钮仅保留【保存】
     document.getElementById('returnRefType').value = returnNewRefType;
-    document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button><button class="btn btn-success" onclick="toastInfo('原型演示：生效退库单')">✨ 生效</button>`;
+    document.getElementById('returnEditBtns').innerHTML = `<button class="btn btn-primary" onclick="toastInfo('原型演示：保存退库草稿')">💾 保存</button>`;
     renderReturnRefOrders(returnNewRefId || null);
   }
 }
