@@ -679,7 +679,8 @@ function renderInboundEdit(id){
     </tr>`).join('') : `<tr class="no-data"><td colspan="${(s==='0'&&!isNew)?11:10}">${isNew?'新增模式：此处展示待入库物料明细':'暂无明细'}</td></tr>`;
   // 顶部按钮
   const bts = [];
-  if(s==='0' && !isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
+  if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
+  } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actInboundAudit('${o.id}')">✨ 生效</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actInboundUnAudit('${o.id}')">↩ 反生效</button>`);
@@ -721,7 +722,8 @@ function renderOutboundEdit(id){
       ${(s==='0'&&!isNew)?`<td><button class="btn-link danger" onclick="toastInfo('原型演示：删除明细')">删除</button></td>`:''}
     </tr>`).join('') : `<tr class="no-data"><td colspan="${(s==='0'&&!isNew)?8:7}">${isNew?'新增模式：此处展示出库明细':'暂无明细'}</td></tr>`;
   const bts=[];
-  if(s==='0'&&!isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
+  if(isNew){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
+  } else if(s==='0'){ bts.push(`<button class="btn btn-primary" onclick="toastInfo('原型演示：保存草稿')">💾 保存</button>`);
     bts.push(`<button class="btn btn-success" onclick="actOutboundAudit('${o.id}')">✨ 生效</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actOutboundVoid('${o.id}')">作废</button>`);
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actOutboundUnAudit('${o.id}')">↩ 反生效</button>`);
