@@ -685,8 +685,9 @@ function renderInboundEdit(id){
   } else if(s==='1'){ bts.push(`<button class="btn btn-warning" onclick="actInboundUnAudit('${o.id}')">↩ 反生效</button>`);
     bts.push(`<button class="btn btn-success" onclick="actInboundStore('${o.id}')">⬇ 入库执行</button>`);
     bts.push(`<button class="btn btn-danger" onclick="actInboundVoid('${o.id}')">作废</button>`);
-  } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromInbound('${o.id}')">↩ 生成退库单</button>`); }
-  if(s==='1'||s==='2') bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印入库单')">🖨 打印</button>`);
+  } else if(s==='2'){ bts.push(`<button class="btn btn-info" onclick="genReturnFromInbound('${o.id}')">↩ 生成退库单</button>`);
+    bts.push(`<button class="btn btn-plain" onclick="toastInfo('打印入库单')">🖨 打印</button>`);
+  }
   document.getElementById('inboundEditBtns').innerHTML = bts.join('');
 }
 
