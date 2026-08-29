@@ -442,7 +442,11 @@
                   </select>
                 </div>
                 <div class="form-item"><label class="req">选择原单</label>
-                  <select class="select" id="returnRefOrder" onchange="onReturnRefOrderChange()"></select>
+                  <div style="display:flex;gap:8px;align-items:center;width:100%">
+                    <input class="input" id="returnRefOrderLabel" readonly placeholder="请选择原单" style="flex:1">
+                    <input type="hidden" id="returnRefOrder">
+                    <button class="btn btn-primary" onclick="openRefOrderPicker()">🔍 选择</button>
+                  </div>
                 </div>
                 <div class="form-item"><label>操作人</label><input class="input" id="returnOperator" disabled value="张仓管"></div>
                 <div class="form-item" style="grid-column: span 4"><label>备注</label><input class="input" id="returnRemark" placeholder="请输入备注"></div>
@@ -640,6 +644,32 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- 原单选择弹窗（支持模糊查询） -->
+<div class="modal-mask" id="refOrderMask">
+  <div class="modal" style="width:720px">
+    <div class="modal-head">选择原单 <span class="sub" id="refPickerTip"></span></div>
+    <div class="modal-body">
+      <div class="toolbar mb-12">
+        <div class="field"><label>关键字</label>
+          <input class="input" id="refPickerKeyword" style="width:280px" placeholder="输入单号 / 往来单位 / 类型 模糊查询" oninput="renderRefPickerList()">
+        </div>
+        <button class="btn btn-plain" onclick="clearRefPickerKeyword()">重置</button>
+      </div>
+      <div style="max-height:320px;overflow:auto;border:1px solid var(--border-light);border-radius:4px">
+        <table class="table">
+          <thead style="position:sticky;top:0;z-index:1"><tr>
+            <th>单号</th><th>往来单位 / 类型</th><th>关联单号</th><th>时间</th><th>操作</th>
+          </tr></thead>
+          <tbody id="refPickerBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-plain" onclick="closeRefOrderPicker()">取消</button>
     </div>
   </div>
 </div>
@@ -1072,19 +1102,74 @@ function openReturnEdit(id){ editingReturnId=id; showSub('return','return-edit')
   renderReturnRefOrders(o);
   renderReturnEditBtns(o); }
 function backReturn(){ showSub('return','return-list'); renderReturnList(); }
+function setRefOrder(id, label){
+  document.getElementById('returnRefOrder').value = id || '';
+  document.getElementById('returnRefOrderLabel').value = label || '';
+}
 function renderReturnRefOrders(preset){
   const rt = document.getElementById('returnRefType').value;
   const done = rt==='1'? inboundOrders.filter(o=>o.status==='2') : outboundOrders.filter(o=>o.status==='2');
-  document.getElementById('returnRefOrder').innerHTML = done.map(o=>
-    `<option value="${o.id}">${o.no} · ${rt==='1'?o.supplier:o.type}</option>`).join('');
   // 支持两种预设：对象(编辑模式,含refId) / 字符串(新增模式带原单id)
   const presetId = (typeof preset === 'object' && preset) ? preset.refId : preset;
-  if(presetId){ document.getElementById('returnRefOrder').value = presetId; loadReturnDetail(presetId); }
-  else if(done.length){ document.getElementById('returnRefOrder').value=done[0].id; loadReturnDetail(done[0].id); }
-  else { clearReturnDetail('暂无可退的已完成单据'); }
+  if(presetId){
+    const o = (rt==='1'?inboundOrders:outboundOrders).find(x=>x.id===presetId);
+    if(o){ setRefOrder(o.id, `${o.no} · ${rt==='1'?o.supplier:o.type}`); loadReturnDetail(presetId); }
+    else { setRefOrder('',''); clearReturnDetail('该原单不可退或不存在'); }
+  } else {
+    // 新增模式：默认不选，提示用户通过弹窗选择
+    setRefOrder('','');
+    clearReturnDetail(done.length? '请点击“🔍 选择”按钮选择原单' : '暂无可退的已完成单据');
+  }
 }
-function onReturnRefTypeChange(){ renderReturnRefOrders(); }
-function onReturnRefOrderChange(){ loadReturnDetail(document.getElementById('returnRefOrder').value); }
+function onReturnRefTypeChange(){
+  // 切换来源类型后清空已选原单（入库/出库原单不同）
+  setRefOrder('','');
+  renderReturnRefOrders();
+}
+
+/* ---------- 原单选择弹窗（模糊查询） ---------- */
+function openRefOrderPicker(){
+  const rt = document.getElementById('returnRefType').value;
+  document.getElementById('refPickerTip').textContent = rt==='1' ? '（入库退库：仅可退已完成入库单）' : '（出库退库：仅可退已完成出库单）';
+  document.getElementById('refPickerKeyword').value='';
+  document.getElementById('refOrderMask').classList.add('show');
+  renderRefPickerList();
+}
+function closeRefOrderPicker(){ document.getElementById('refOrderMask').classList.remove('show'); }
+function clearRefPickerKeyword(){ document.getElementById('refPickerKeyword').value=''; renderRefPickerList(); }
+function renderRefPickerList(){
+  const rt = document.getElementById('returnRefType').value;
+  const kw = (document.getElementById('refPickerKeyword').value||'').trim().toLowerCase();
+  let list = rt==='1'? inboundOrders.filter(o=>o.status==='2') : outboundOrders.filter(o=>o.status==='2');
+  // 模糊查询：单号 / 往来单位(入库) 或 类型(出库) / 关联单号
+  if(kw){
+    list = list.filter(o=>{
+      const party = rt==='1' ? (o.supplier||'') : (o.customer||'');
+      const extra = rt==='1' ? (o.purchaseNo||'') : (o.refNo||'');
+      return (o.no||'').toLowerCase().includes(kw)
+        || party.toLowerCase().includes(kw)
+        || extra.toLowerCase().includes(kw);
+    });
+  }
+  document.getElementById('refPickerBody').innerHTML = list.length? list.map(o=>{
+    const party = rt==='1' ? (o.supplier||'—') : (`${o.customer||'—'} / ${o.type||''}`);
+    const extra = rt==='1' ? (o.purchaseNo||'—') : (o.refNo||'—');
+    const time = rt==='1' ? (o.warehousingTime||'—') : (o.outTime||'—');
+    return `<tr>
+      <td><b>${o.no}</b></td><td>${party}</td><td>${extra}</td><td>${time}</td>
+      <td><button class="btn-link" onclick="pickRefOrder('${o.id}')">选择</button></td>
+    </tr>`;
+  }).join('') : `<tr class="no-data"><td colspan="5">未找到匹配的单据</td></tr>`;
+}
+function pickRefOrder(id){
+  const rt = document.getElementById('returnRefType').value;
+  const o = (rt==='1'?inboundOrders:outboundOrders).find(x=>x.id===id);
+  if(!o) return;
+  setRefOrder(o.id, `${o.no} · ${rt==='1'?o.supplier:o.type}`);
+  closeRefOrderPicker();
+  loadReturnDetail(id);
+  toast('已选择原单：'+o.no,'success');
+}
 function loadReturnDetail(refId, preset){
   const rt = document.getElementById('returnRefType').value;
   const src = rt==='1'? inboundDetails[refId] : outboundDetails[refId];
