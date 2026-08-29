@@ -463,7 +463,6 @@
                       <div id="refSuggest" class="suggest-box"></div>
                     </div>
                     <input type="hidden" id="returnRefOrder">
-                    <button class="btn btn-primary" onclick="openRefOrderPicker()">🔍 选择</button>
                   </div>
                 </div>
                 <div class="form-item"><label>操作人</label><input class="input" id="returnOperator" disabled value="张仓管"></div>
@@ -477,7 +476,7 @@
               <table class="table">
                 <thead><tr>
                   <th>批次号</th><th>物料编号</th><th>物料名称</th><th>规格</th><th>单位</th><th class="num">原单数量</th><th class="num">已退数量</th>
-                  <th class="num">可退数量</th><th class="num" id="returnQtyHead">本次退库数量</th><th>备注</th><th id="returnDetailOpsHead"></th>
+                  <th class="num">可退数量</th><th class="num" id="returnQtyHead">本次退库数量</th><th>仓库</th><th>备注</th><th id="returnDetailOpsHead"></th>
                 </tr></thead>
                 <tbody id="returnDetailBody"></tbody>
               </table>
@@ -1136,7 +1135,7 @@ function renderReturnRefOrders(preset){
   } else {
     // 新增模式：默认不选，提示用户通过弹窗选择
     setRefOrder('','');
-    clearReturnDetail(done.length? '请点击“🔍 选择”按钮选择原单' : '暂无可退的已完成单据');
+    clearReturnDetail(done.length? '请双击或单击原单输入框选择原单' : '暂无可退的已完成单据');
   }
 }
 function onReturnRefTypeChange(){
@@ -1237,7 +1236,7 @@ function loadReturnDetail(refId, preset){
   // 从原单带出明细（含原单数量/已退/可退），扫描添加的明细保留
   const origin = src.map(d=>({
     batch:d.batch, matCode:d.matCode, matName:d.matName, spec:d.spec||'', unit:d.unit||'',
-    originalQty:d.qty, returnedQty:d.returned||0, returnQty:0, remark:'', fromOrder:true
+    loc:d.loc||'', originalQty:d.qty, returnedQty:d.returned||0, returnQty:0, remark:'', fromOrder:true
   }));
   returnEditDetails = origin;
   document.getElementById('returnDetailTip').innerHTML = `原单 ${refOrder.no} · 可退数量 = 原单数量 − 已退数量`;
@@ -1254,13 +1253,14 @@ function renderReturnDetailTable(){
       <td class="num" style="color:var(--primary);font-weight:600">${avail}</td>
       ${editable
         ?`<td class="num"><input class="input" style="width:80px;text-align:right" type="number" min="0" max="${avail}" value="${d.returnQty||0}" onchange="editDetailQty('return',${i},this.value)"></td>
+          <td>${d.loc||'—'}</td>
           <td><input class="input" style="width:110px" placeholder="请输入备注" value="${d.remark||''}" onchange="editDetailRemark(${i},this.value)"></td>`
-        :`<td class="num">${d.returnQty||0}</td><td>${d.remark||'—'}</td>`}
+        :`<td class="num">${d.returnQty||0}</td><td>${d.loc||'—'}</td><td>${d.remark||'—'}</td>`}
       ${editable?`<td><button class="btn-link danger" onclick="removeDetail('return',${i})">删除</button></td>`:''}
     </tr>`;
-  }).join('') : `<tr class="no-data"><td colspan="11">${isNewMode?'请选择原单带出明细':'暂无明细'}</td></tr>`;
+  }).join('') : `<tr class="no-data"><td colspan="12">${isNewMode?'请选择原单带出明细':'暂无明细'}</td></tr>`;
 }
-function clearReturnDetail(tip){ document.getElementById('returnDetailTip').innerHTML = tip||''; returnEditDetails=[]; document.getElementById('returnDetailBody').innerHTML = `<tr class="no-data"><td colspan="11">${tip||'请选择原单'}</td></tr>`; }
+function clearReturnDetail(tip){ document.getElementById('returnDetailTip').innerHTML = tip||''; returnEditDetails=[]; document.getElementById('returnDetailBody').innerHTML = `<tr class="no-data"><td colspan="12">${tip||'请选择原单'}</td></tr>`; }
 
 /* =========================================================
  * 扫描批次号添加明细（入库/出库/退库 统一）
