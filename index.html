@@ -172,6 +172,18 @@
   @keyframes load { 0%{width:0} 50%{width:60%} 100%{width:100%} }
   .fade { animation: fade .2s ease; }
   @keyframes fade { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+  /* 内联模糊查询下拉建议 */
+  .suggest-box {
+    position: absolute; top: 100%; left: 0; right: 0; background: #fff;
+    border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    max-height: 240px; overflow: auto; z-index: 100; display: none; margin-top: 2px;
+  }
+  .suggest-box.show { display: block; }
+  .suggest-item { padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border-light); }
+  .suggest-item:last-child { border-bottom: none; }
+  .suggest-item:hover { background: #f5f7fa; }
+  .suggest-item .sub { color: var(--secondary-text); font-size: 12px; }
+
   /* Toast */
   .toast-wrap { position: fixed; top: 60px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
   .toast {
@@ -443,7 +455,13 @@
                 </div>
                 <div class="form-item"><label class="req">选择原单</label>
                   <div style="display:flex;gap:8px;align-items:center;width:100%">
-                    <input class="input" id="returnRefOrderLabel" readonly placeholder="请选择原单" style="flex:1">
+                    <div style="position:relative;flex:1">
+                      <input class="input" id="returnRefOrderLabel" autocomplete="off"
+                             placeholder="单击输入模糊查询 / 双击弹出选择" style="width:100%"
+                             oninput="filterRefOrderInline()" onfocus="filterRefOrderInline()"
+                             ondblclick="openRefOrderPicker()" onblur="setTimeout(hideRefSuggest,250)">
+                      <div id="refSuggest" class="suggest-box"></div>
+                    </div>
                     <input type="hidden" id="returnRefOrder">
                     <button class="btn btn-primary" onclick="openRefOrderPicker()">🔍 选择</button>
                   </div>
@@ -1167,6 +1185,47 @@ function pickRefOrder(id){
   if(!o) return;
   setRefOrder(o.id, `${o.no} · ${rt==='1'?o.supplier:o.type}`);
   closeRefOrderPicker();
+  loadReturnDetail(id);
+  toast('已选择原单：'+o.no,'success');
+}
+
+/* ---------- 输入框内联模糊查询（单击输入时实时过滤） ---------- */
+function filterRefOrderInline(){
+  const rt = document.getElementById('returnRefType').value;
+  const kw = (document.getElementById('returnRefOrderLabel').value||'').trim().toLowerCase();
+  let list = rt==='1'? inboundOrders.filter(o=>o.status==='2') : outboundOrders.filter(o=>o.status==='2');
+  if(kw){
+    list = list.filter(o=>{
+      const party = rt==='1' ? (o.supplier||'') : (`${o.customer||''} ${o.type||''}`);
+      const extra = rt==='1' ? (o.purchaseNo||'') : (o.refNo||'');
+      return (o.no||'').toLowerCase().includes(kw)
+        || party.toLowerCase().includes(kw)
+        || extra.toLowerCase().includes(kw);
+    });
+  }
+  const box = document.getElementById('refSuggest');
+  if(!list.length){
+    box.innerHTML = `<div class="suggest-item muted">${kw?'未找到匹配单据':'暂无可退的已完成单据'}</div>`;
+    box.classList.add('show');
+    return;
+  }
+  box.innerHTML = list.slice(0,20).map(o=>{
+    const party = rt==='1' ? (o.supplier||'—') : (`${o.customer||'—'} / ${o.type||''}`);
+    const extra = rt==='1' ? (o.purchaseNo||'—') : (o.refNo||'—');
+    return `<div class="suggest-item" onmousedown="pickRefOrderInline('${o.id}')">
+      <b>${o.no}</b> <span class="sub">${party}</span>
+      <div class="sub">关联单号：${extra}</div>
+    </div>`;
+  }).join('');
+  box.classList.add('show');
+}
+function hideRefSuggest(){ document.getElementById('refSuggest').classList.remove('show'); }
+function pickRefOrderInline(id){
+  const rt = document.getElementById('returnRefType').value;
+  const o = (rt==='1'?inboundOrders:outboundOrders).find(x=>x.id===id);
+  if(!o) return;
+  setRefOrder(o.id, `${o.no} · ${rt==='1'?o.supplier:o.type}`);
+  hideRefSuggest();
   loadReturnDetail(id);
   toast('已选择原单：'+o.no,'success');
 }
