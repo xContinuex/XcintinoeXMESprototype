@@ -665,6 +665,13 @@
  * ========================================================= */
 const STATUS = { 0:'草稿', 1:'已生效', 2:'已完成', 9:'已作废' };
 const STATUS_TAG = { 0:'tag-draft', 1:'tag-active', 2:'tag-done', 9:'tag-void' };
+// 草稿状态按单据类型的语义化名称：入库单=待入库 / 出库单=待出库 / 退库单=待退库
+const DRAFT_LABEL = { inbound:'待入库', outbound:'待出库', return:'待退库' };
+function tag(st, kind){
+  const isDraft = (st==='0'||st===0);
+  const label = (isDraft && kind && DRAFT_LABEL[kind]) ? DRAFT_LABEL[kind] : STATUS[st];
+  return `<span class="tag ${STATUS_TAG[st]}">${label}</span>`;
+}
 
 // mock 数据
 let inboundOrders = [
@@ -806,8 +813,7 @@ function renderMatrix(){
   ).join('');
 }
 
-// 状态标签
-function tag(st){ return `<span class="tag ${STATUS_TAG[st]}">${STATUS[st]}</span>`; }
+// 状态标签（见顶部 tag(st, kind) 定义，支持按单据类型显示草稿语义名）
 
 
 // 行操作按钮生成（权限标识注释）
@@ -855,7 +861,7 @@ function renderInboundList(){
   document.getElementById('inboundTableBody').innerHTML = rows.length? rows.map(o=>
     `<tr>
       <td><b>${o.no}</b></td><td>${o.supplier}</td><td>${o.purchaseNo}</td>
-      <td>${o.operator}</td><td>${o.warehousingTime||'—'}</td><td>${tag(o.status)}</td><td>${o.remark||'—'}</td>
+      <td>${o.operator}</td><td>${o.warehousingTime||'—'}</td><td>${tag(o.status,'inbound')}</td><td>${o.remark||'—'}</td>
       <td>${rowBtns(o,'inbound')}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
   document.getElementById('navCountInbound').textContent = inboundOrders.filter(o=>o.status!=='__deleted__').length;
@@ -873,7 +879,7 @@ function renderOutboundList(){
   document.getElementById('outboundTableBody').innerHTML = rows.length? rows.map(o=>
     `<tr>
       <td>${o.planNo}</td><td><b>${o.no}</b></td><td>${o.refNo||'—'}</td><td>${o.customer||'—'}</td><td>${o.type}</td>
-      <td>${tag(o.status)}</td><td>${o.outTime||'—'}</td><td>${o.remark||'—'}</td>
+      <td>${tag(o.status,'outbound')}</td><td>${o.outTime||'—'}</td><td>${o.remark||'—'}</td>
       <td>${rowBtns(o,'outbound')}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
   document.getElementById('navCountOutbound').textContent = outboundOrders.filter(o=>o.status!=='__deleted__').length;
@@ -891,7 +897,7 @@ function renderReturnList(){
   document.getElementById('returnTableBody').innerHTML = rows.length? rows.map(o=>
     `<tr>
       <td><b>${o.no}</b></td><td>${o.refType==='1'?'入库退库':'出库退库'}</td><td>${o.refNo}</td>
-      <td>${tag(o.status)}</td><td class="num">${o.totalQty||'—'}</td><td>${o.remark||'—'}</td>
+      <td>${tag(o.status,'return')}</td><td class="num">${o.totalQty||'—'}</td><td>${o.remark||'—'}</td>
       <td>${o.operator}</td><td>${o.returnTime||'—'}</td>
       <td>${returnRowBtns(o)}</td>
     </tr>`).join('') : `<tr class="no-data"><td colspan="9">暂无数据</td></tr>`;
@@ -950,7 +956,7 @@ function renderInboundEdit(id){
   const o = isNew? {id:'',no:'',externalCode:'',supplier:'',purchaseNo:'',operator:'李制单',warehousingTime:'',status:'0',remark:''} : inboundOrders.find(x=>x.id===id);
   const s = o.status;
   const readonly = s==='1'||s==='2'||s==='9';
-  document.getElementById('inboundEditStatus').innerHTML = `状态：${tag(s)}` + (isNew?'<span class="muted">（新增草稿）</span>':'');
+  document.getElementById('inboundEditStatus').innerHTML = `状态：${tag(s,'inbound')}` + (isNew?'<span class="muted">（新增待入库）</span>':'');
   document.getElementById('inboundFormGrid').innerHTML = `
     <div class="form-item"><label>单据编号</label><input class="input" value="${o.no}" ${readonly?'disabled':''} placeholder="留空自动生成"></div>
     <div class="form-item"><label>往来单位</label><input class="input" value="${o.supplier}" ${readonly?'disabled':''} placeholder="选填"></div>
@@ -996,7 +1002,7 @@ function renderOutboundEdit(id){
   const o = isNew? {id:'',no:'',planNo:'',externalCode:'',type:'销售出库',status:'0',outTime:'',customer:'',contact:'',phone:'',remark:''} : outboundOrders.find(x=>x.id===id);
   const s = o.status;
   const readonly = s==='1'||s==='2'||s==='9';
-  document.getElementById('outboundEditStatus').innerHTML = `状态：${tag(s)}`;
+  document.getElementById('outboundEditStatus').innerHTML = `状态：${tag(s,'outbound')}`;
   document.getElementById('outboundFormGrid').innerHTML = `
     <div class="form-item"><label>出库单号</label><input class="input" value="${o.no}" ${readonly?'disabled':''} placeholder="留空自动生成"></div>
     <div class="form-item"><label>类型</label><input class="input" value="${o.type}" ${readonly?'disabled':''}></div>
